@@ -117,7 +117,7 @@ volumes:
     secret:
       secretName: email-secrets
       optional: false
-  - name: twilio_secrets
+  - name: twilio-secrets
     secret:
       secretName: twilio-secrets
       optional: false
@@ -148,7 +148,7 @@ volumeMounts:
     mountPath: /app/config/email_secrets.yml
     readOnly: true
     subPath: email_secrets.yml
-  - name: twilio_secrets
+  - name: twilio-secrets
     mountPath: /app/config/twilio_secrets.yml
     readOnly: true
     subPath: twilio_secrets.yml
