@@ -23,6 +23,13 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      initContainers:
+      - name: init-permissions
+        image: nginx
+        command: ["sh", "-c", "mkdir -p /app/log && chmod -R 777 /app/log"]
+        volumeMounts:
+          - name: auth-log-volume
+            mountPath: /app/log
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
