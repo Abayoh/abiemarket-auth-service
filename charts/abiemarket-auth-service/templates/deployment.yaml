@@ -23,7 +23,7 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      initContainers:
+      initContainers: #I added the below init container to create a log directory and set permissions because without it the pod had a permission denied error
       - name: init-permissions
         image: nginx
         command: ["sh", "-c", "mkdir -p /app/log && chmod -R 777 /app/log"]

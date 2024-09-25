@@ -47,6 +47,9 @@ app.use((req, res, next) => {
   res.on("finish", () => {
     const elapsedHrTime = process.hrtime(startHrTime);
     const elapsedTimeInMs = elapsedHrTime[0] * 1000 + elapsedHrTime[1] / 1e6;
+
+    if (req.path === "/v1/health") return; //do not log health check requests from kubernetes
+
     logger.http(
       `${req.method} ${req.url} ${res.statusCode} - ${elapsedTimeInMs} ms`
     );
@@ -58,6 +61,11 @@ app.use((req, res, next) => {
 // Define a route
 app.get("/v1", (req, res) => {
   res.send(`Hello, Auth Server ${os.hostname()}`);
+});
+
+//kubernetes health check
+app.get("/v1/health", (req, res) => {
+  res.send("OK");
 });
 
 // auth routes
