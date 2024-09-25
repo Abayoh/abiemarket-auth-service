@@ -47,6 +47,6 @@ export const logConfigs = new ConfigLoader<LogConfigs>(
 );
 
 export const servicesUrsLoader = new ConfigLoader<ServiceUrlsConfig>(
-  "../../config/services_urls.yml",
+  "../../config/service_urls.yml",
   watch
 );
