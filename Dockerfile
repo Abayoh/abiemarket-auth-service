@@ -21,6 +21,7 @@ COPY build/ ./build/
 
 # Create the log directory and set permissions
 RUN mkdir -p /app/log && chown -R 1000:1000 /app/log
+RUN mkdir -p /app/config && chown -R 1000:1000 /app/config
 
 # Change ownership of the copied files
 RUN chown -R 1000:1000 /app/build /app/config
