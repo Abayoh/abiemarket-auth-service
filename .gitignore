@@ -132,3 +132,6 @@ dist
 
 build/
 config/
+
+#uningnore the src/config directory
+!src/config/
