@@ -121,6 +121,9 @@ volumes:
     secret:
       secretName: twilio-secrets
       optional: false
+  - name: auth-log-pv
+    persistentVolumeClaim:
+      claimName: auth-log-pvc
 
 # Additional volumeMounts on the output Deployment definition.
 volumeMounts:
@@ -152,6 +155,8 @@ volumeMounts:
     mountPath: /app/config/twilio_secrets.yml
     readOnly: true
     subPath: twilio_secrets.yml
+  - name: auth-log-pv
+    mountPath: /app/log
 
 nodeSelector: {}
 
