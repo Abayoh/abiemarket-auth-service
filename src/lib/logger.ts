@@ -115,6 +115,7 @@ class Logger {
   }
 
   private createLogger() {
+    console.log("Creating logger");
     return winston.createLogger({
       levels: logConfigs.getConfig().logLevels,
       level: logConfigs.getConfig().logLevel,
@@ -127,6 +128,7 @@ class Logger {
   }
 
   private createDailyRotateFileTransport() {
+    console.log("Creating daily rotate file transport");
     return new DailyRotateFile({
       filename: logConfigs.getConfig().logFile || "logs/application-%DATE%.log", // Ensure logs directory exists
       datePattern: logConfigs.getConfig().datePattern || "YYYY-MM-DD",
