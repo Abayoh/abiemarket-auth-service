@@ -17,7 +17,7 @@ RUN npm install
 COPY build/ ./build/
 
 # Copy the config files
-COPY config/ ./config/
+#COPY config/ ./config/ #for local development
 
 # Create the log directory and set permissions
 RUN mkdir -p /app/log && chown -R 1000:1000 /app/log
