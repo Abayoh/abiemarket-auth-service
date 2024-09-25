@@ -96,7 +96,7 @@ initContainers:
     image: nginx
     command: ["sh", "-c", "mkdir -p /app/log && chmod -R 777 /app/log"]
     volumeMounts:
-      - name: auth-log-volume
+      - name: auth-log-pv
         mountPath: /app/log
 
 # Additional volumes on the output Deployment definition.
