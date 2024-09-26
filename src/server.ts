@@ -69,16 +69,14 @@ app.set("trust proxy", true);
 
 // Middleware to log response time
 app.use((req, res, next) => {
-  req.requestId = req.headers["x-request-id"] as string;
+  req.requestId = "kdkdkdkd"; //req.headers["x-request-id"] as string;
   res.setHeader("x-request-id", req.requestId);
-  req.forwardedForIp = req.headers["x-forwarded-for"] as string;
-  req.forwardedUserAgent = req.headers["x-forwarded-user-agent"] as string;
+  req.forwardedForIp = "192"; //req.headers["x-forwarded-for"] as string;
+  req.forwardedUserAgent = "alex"; //req.headers["x-forwarded-user-agent"] as string;
   const startHrTime = process.hrtime();
 
   console.log("Request received", {
-    requestId: req.requestId,
-    forwardedForIp: req.forwardedForIp,
-    forwardedUserAgent: req.forwardedUserAgent,
+    headers: req.headers,
   });
 
   res.on("finish", () => {
