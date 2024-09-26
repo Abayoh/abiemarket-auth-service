@@ -38,7 +38,7 @@ const validateSchema =
         action: "validateSchema",
         requestId: req.requestId,
         userIdentifier: `${user.sub}`,
-        ipAddress: req.ip || "",
+        ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
         userAgent: req.get("User-Agent") || "",
