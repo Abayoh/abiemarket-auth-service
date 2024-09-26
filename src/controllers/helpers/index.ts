@@ -39,7 +39,7 @@ export async function sendVerificationTokenHandler(
           ipAddress: req.ip || "" || "",
           endpoint: req.path,
           httpMethod: req.method,
-          userAgent: req.get("User-Agent") || "" || "",
+          userAgent: req.forwardedUserAgent || "",
           errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
           statusCode:
             authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
@@ -57,7 +57,7 @@ export async function sendVerificationTokenHandler(
           ipAddress: req.ip || "" || "",
           endpoint: req.path,
           httpMethod: req.method,
-          userAgent: req.get("User-Agent") || "" || "",
+          userAgent: req.forwardedUserAgent || "",
           statusCode:
             authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
         }
@@ -77,7 +77,7 @@ export async function sendVerificationTokenHandler(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
 
         statusCode:
@@ -115,7 +115,7 @@ export async function sendVerificationTokenHandler(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_TOO_MANY_VERI_REQ,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_TOO_MANY_VERI_REQ].status,
@@ -179,7 +179,7 @@ export async function sendVerificationTokenHandler(
           ipAddress: req.forwardedForIp,
           endpoint: req.path,
           httpMethod: req.method,
-          userAgent: req.get("User-Agent") || "",
+          userAgent: req.forwardedUserAgent,
           errorCode: authErrorCodes.AUTH_VERIF_EMAIL_FAIL,
           statusCode:
             authErrorCodesMap[authErrorCodes.AUTH_VERIF_EMAIL_FAIL].status,
@@ -220,7 +220,7 @@ export async function verifyVerificationTokenHandler(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_VERIFICATION_CODE_INVALID,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_VERIFICATION_CODE_INVALID]
@@ -249,7 +249,7 @@ export async function verifyVerificationTokenHandler(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_VERIFICATION_CODE_EXPIRED,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_VERIFICATION_CODE_EXPIRED]
@@ -268,7 +268,7 @@ export async function verifyVerificationTokenHandler(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_VERIFICATION_CODE_INVALID,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_VERIFICATION_CODE_INVALID]
@@ -291,7 +291,7 @@ export async function verifyVerificationTokenHandler(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_CODE_MAX_TRIES,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_CODE_MAX_TRIES].status,

@@ -61,7 +61,7 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
           ipAddress: req.forwardedForIp,
           endpoint: req.path,
           httpMethod: req.method,
-          userAgent: req.get("User-Agent") || "",
+          userAgent: req.forwardedUserAgent,
           errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
           statusCode:
             authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
@@ -82,7 +82,7 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
           ipAddress: req.forwardedForIp,
           endpoint: req.path,
           httpMethod: req.method,
-          userAgent: req.get("User-Agent") || "",
+          userAgent: req.forwardedUserAgent,
           errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
           statusCode:
             authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
@@ -154,7 +154,7 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
           ipAddress: req.forwardedForIp,
           endpoint: req.path,
           httpMethod: req.method,
-          userAgent: req.get("User-Agent") || "",
+          userAgent: req.forwardedUserAgent,
           errorCode: authErrorCodes.AUTH_RT_CACHED_FAILED,
           statusCode:
             authErrorCodesMap[authErrorCodes.AUTH_RT_CACHED_FAILED].status,
@@ -214,7 +214,7 @@ export async function renewAccessToken(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_INVALID_REFRESH_TOKEN,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_INVALID_REFRESH_TOKEN].status,
@@ -240,7 +240,7 @@ export async function renewAccessToken(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_INVALID_REFRESH_TOKEN,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_INVALID_REFRESH_TOKEN].status,
@@ -256,7 +256,7 @@ export async function renewAccessToken(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_TOKEN_EXPIRED,
         statusCode: authErrorCodesMap[authErrorCodes.AUTH_TOKEN_EXPIRED].status,
       });
@@ -277,7 +277,7 @@ export async function renewAccessToken(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_INVALID_REFRESH_TOKEN,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_INVALID_REFRESH_TOKEN].status,
@@ -293,7 +293,7 @@ export async function renewAccessToken(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_INVALID_REFRESH_TOKEN,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_INVALID_REFRESH_TOKEN].status,
@@ -345,7 +345,7 @@ export async function signout(req: Request, res: Response, next: NextFunction) {
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_INVALID_REFRESH_TOKEN,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_INVALID_REFRESH_TOKEN].status,
@@ -371,7 +371,7 @@ export async function signout(req: Request, res: Response, next: NextFunction) {
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_INVALID_REFRESH_TOKEN,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_INVALID_REFRESH_TOKEN].status,
@@ -460,7 +460,7 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
             ipAddress: req.forwardedForIp,
             endpoint: req.path,
             httpMethod: req.method,
-            userAgent: req.get("User-Agent") || "",
+            userAgent: req.forwardedUserAgent,
             errorCode: authErrorCodes.AUTH_SIGNUP_EMAIL_TAKEN,
             statusCode:
               authErrorCodesMap[authErrorCodes.AUTH_SIGNUP_EMAIL_TAKEN].status,
@@ -477,7 +477,7 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
             ipAddress: req.forwardedForIp,
             endpoint: req.path,
             httpMethod: req.method,
-            userAgent: req.get("User-Agent") || "",
+            userAgent: req.forwardedUserAgent,
             errorCode: authErrorCodes.AUTH_SIGNUP_PHONE_TAKEN,
             statusCode:
               authErrorCodesMap[authErrorCodes.AUTH_SIGNUP_PHONE_TAKEN].status,
@@ -641,7 +641,7 @@ export async function sellerSignin(
           ipAddress: req.forwardedForIp,
           endpoint: req.path,
           httpMethod: req.method,
-          userAgent: req.get("User-Agent") || "",
+          userAgent: req.forwardedUserAgent,
           errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
           statusCode:
             authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
@@ -659,7 +659,7 @@ export async function sellerSignin(
           ipAddress: req.forwardedForIp,
           endpoint: req.path,
           httpMethod: req.method,
-          userAgent: req.get("User-Agent") || "",
+          userAgent: req.forwardedUserAgent,
           errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
           statusCode:
             authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
@@ -679,7 +679,7 @@ export async function sellerSignin(
           ipAddress: req.forwardedForIp,
           endpoint: req.path,
           httpMethod: req.method,
-          userAgent: req.get("User-Agent") || "",
+          userAgent: req.forwardedUserAgent,
           errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
           statusCode:
             authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
@@ -832,7 +832,7 @@ export async function resetPassword(
           ipAddress: req.forwardedForIp,
           endpoint: req.path,
           httpMethod: req.method,
-          userAgent: req.get("User-Agent") || "",
+          userAgent: req.forwardedUserAgent,
           errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
           statusCode:
             authErrorCodesMap[authErrorCodes.AUTH_USER_NOT_FOUND].status,
@@ -901,7 +901,7 @@ export async function grant(req: any, res: Response, next: NextFunction) {
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_USER_NOT_FOUND].status,
@@ -920,7 +920,7 @@ export async function grant(req: any, res: Response, next: NextFunction) {
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_UNAUTHORIZE,
         statusCode: authErrorCodesMap[authErrorCodes.AUTH_UNAUTHORIZE].status,
       });
@@ -942,7 +942,7 @@ export async function grant(req: any, res: Response, next: NextFunction) {
           ipAddress: req.forwardedForIp,
           endpoint: req.path,
           httpMethod: req.method,
-          userAgent: req.get("User-Agent") || "",
+          userAgent: req.forwardedUserAgent,
           errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
           statusCode:
             authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
@@ -1031,7 +1031,7 @@ export async function session(req: Request, res: Response, next: NextFunction) {
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_INVALID_SESSION_TOKEN,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_INVALID_SESSION_TOKEN].status,
@@ -1054,7 +1054,7 @@ export async function session(req: Request, res: Response, next: NextFunction) {
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_TOKEN_EXPIRED,
         statusCode: authErrorCodesMap[authErrorCodes.AUTH_TOKEN_EXPIRED].status,
       });
@@ -1122,7 +1122,7 @@ export async function makeUserSeller(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_USER_NOT_FOUND].status,
@@ -1138,7 +1138,7 @@ export async function makeUserSeller(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_USER_ALREADY_SELLER,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_USER_ALREADY_SELLER].status,
@@ -1181,7 +1181,7 @@ export async function generateClientToken(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_BAD_REQUEST,
         statusCode: authErrorCodesMap[authErrorCodes.AUTH_BAD_REQUEST].status,
       });
@@ -1273,7 +1273,7 @@ export async function verifyToken(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_INVALID_TOKEN,
         statusCode: authErrorCodesMap[authErrorCodes.AUTH_INVALID_TOKEN].status,
       });
@@ -1291,7 +1291,7 @@ export async function verifyToken(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_TOKEN_EXPIRED,
         statusCode: authErrorCodesMap[authErrorCodes.AUTH_TOKEN_EXPIRED].status,
       });
@@ -1309,7 +1309,7 @@ export async function verifyToken(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_INVALID_TOKEN,
         statusCode: authErrorCodesMap[authErrorCodes.AUTH_INVALID_TOKEN].status,
       });
@@ -1358,7 +1358,7 @@ export async function verifyToken(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_INVALID_TOKEN,
         statusCode: authErrorCodesMap[authErrorCodes.AUTH_INVALID_TOKEN].status,
       });

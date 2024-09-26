@@ -41,7 +41,7 @@ const validateSchema =
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_REQ_VALIDATION_ERROR,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,

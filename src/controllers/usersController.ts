@@ -34,7 +34,7 @@ export async function getUserInfo(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
@@ -69,7 +69,7 @@ export async function changeUserPassword(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_USER_NOT_FOUND].status,
@@ -91,7 +91,7 @@ export async function changeUserPassword(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
@@ -139,7 +139,7 @@ export async function changeUserEmail(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
@@ -178,7 +178,7 @@ export async function changeUserPhone(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
@@ -213,7 +213,7 @@ export async function changeUserName(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
@@ -270,7 +270,7 @@ export async function addUserAddress(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_USER_NOT_FOUND].status,
@@ -298,7 +298,7 @@ export async function addUserAddress(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_INTERNAL_SERVER_ERROR,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_INTERNAL_SERVER_ERROR].status,
@@ -386,7 +386,7 @@ export async function updateUserAddress(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_ADDRESS_NOT_FOUND].status,
@@ -424,7 +424,7 @@ export async function getUserAddresses(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_ADDRESS_NOT_FOUND].status,
@@ -464,7 +464,7 @@ export async function getUserAddress(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_ADDRESS_NOT_FOUND].status,
@@ -501,7 +501,7 @@ export async function verifyUserEmail(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_EMAIL_CONFLICT,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_EMAIL_CONFLICT].status,
@@ -522,7 +522,7 @@ export async function verifyUserEmail(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_USER_NOT_FOUND].status,
@@ -562,7 +562,7 @@ export async function verifyUserPhone(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_PHONE_CONFLICT,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_PHONE_CONFLICT].status,
@@ -583,7 +583,7 @@ export async function verifyUserPhone(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_USER_NOT_FOUND].status,
@@ -624,7 +624,7 @@ export async function setAddressAsDefault(
         ipAddress: req.forwardedForIp,
         endpoint: req.path,
         httpMethod: req.method,
-        userAgent: req.get("User-Agent") || "",
+        userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
         statusCode:
           authErrorCodesMap[authErrorCodes.AUTH_USER_NOT_FOUND].status,

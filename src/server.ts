@@ -58,7 +58,7 @@ app.set("trust proxy", true);
 //       ipAddress: req.forwardedForIp,
 //       endpoint: req.path,
 //       httpMethod: req.method,
-//       userAgent: req.get("User-Agent") || "",
+//       userAgent: req.forwardedUserAgent,
 //       errorCode: authErrorCodes.AUTH_UNAUTHORIZED_IP,
 //       statusCode: authErrorCodesMap[authErrorCodes.AUTH_UNAUTHORIZED_IP].status,
 //     });
@@ -76,10 +76,6 @@ app.use((req, res, next) => {
   req.forwardedForIp = req.headers["x-original-forwarded-for"] as string;
   req.forwardedUserAgent = req.headers["x-forwarded-user-agent"] as string;
   const startHrTime = process.hrtime();
-
-  console.log("Request received", {
-    headers: req.headers,
-  });
 
   res.on("finish", () => {
     const elapsedHrTime = process.hrtime(startHrTime);
@@ -119,7 +115,7 @@ app.use((req, res, next) => {
     ipAddress: req.forwardedForIp,
     endpoint: req.path,
     httpMethod: req.method,
-    userAgent: req.get("User-Agent") || "",
+    userAgent: req.forwardedUserAgent,
     errorCode: authErrorCodes.AUTH_ROUTE_NOT_FOUND,
     statusCode: authErrorCodesMap[authErrorCodes.AUTH_ROUTE_NOT_FOUND].status,
   });

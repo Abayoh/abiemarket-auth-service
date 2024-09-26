@@ -32,7 +32,7 @@ const can = ({ action, verifyOwner = false }: CanParams) =>
             ipAddress: req.forwardedForIp,
             endpoint: req.path,
             httpMethod: req.method,
-            userAgent: req.get("User-Agent") || "",
+            userAgent: req.forwardedUserAgent,
             errorCode: authErrorCodes.AUTH_UNAUTHORIZE,
             statusCode:
               authErrorCodesMap[authErrorCodes.AUTH_UNAUTHORIZE].status,
@@ -52,7 +52,7 @@ const can = ({ action, verifyOwner = false }: CanParams) =>
             ipAddress: req.forwardedForIp,
             endpoint: req.path,
             httpMethod: req.method,
-            userAgent: req.get("User-Agent") || "",
+            userAgent: req.forwardedUserAgent,
             errorCode: authErrorCodes.AUTH_UNAUTHORIZE,
             statusCode:
               authErrorCodesMap[authErrorCodes.AUTH_UNAUTHORIZE].status,
