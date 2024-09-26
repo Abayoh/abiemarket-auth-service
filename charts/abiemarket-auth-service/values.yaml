@@ -47,14 +47,14 @@ service:
   port: 80
 
 ingress:
-  enabled: false
+  enabled: true
   className: "nginx"
   annotations:
     {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: auth-dev-api.abiemarket.com
+    - host: dev-auth.abiemarket.com
       paths:
         - path: /
           pathType: ImplementationSpecific
