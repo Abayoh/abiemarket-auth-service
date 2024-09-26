@@ -45,8 +45,8 @@ class ConfigLoader<T> extends EventEmitter {
       if (event.eventType === "change") {
         console.log(`${this.configPath} changed, reloading configuration...`);
 
-        this.emit("configChange", this.config);
         this.loadConfig();
+        this.emit("configChange", this.config);
       }
     }
   }
