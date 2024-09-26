@@ -68,10 +68,7 @@ class Logger {
     // Create a daily rotate file transport
     this.dailyRotateFileTransport = this.createDailyRotateFileTransport();
 
-    logConfigs.on("configChange", () => {
-      this.dailyRotateFileTransport = this.createDailyRotateFileTransport();
-      this.logger = this.createLogger();
-    });
+    logConfigs.on("configChange", this.updateLogger.bind(this));
 
     this.level = logConfigs.getConfig().logLevel;
     this.levels = logConfigs.getConfig().logLevels;
@@ -81,6 +78,12 @@ class Logger {
     ];
     // Create the logger instance
     this.logger = this.createLogger();
+  }
+
+  private updateLogger() {
+    this.dailyRotateFileTransport = this.createDailyRotateFileTransport();
+    this.logger = this.createLogger();
+    console.log(this.logger.level);
   }
 
   // Get logger child instance for a specific level
