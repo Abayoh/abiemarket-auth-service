@@ -333,7 +333,7 @@ export async function renewAccessToken(
 //private
 export async function signout(req: Request, res: Response, next: NextFunction) {
   try {
-    const refreshToken = req.body.refresh_token;
+    const refreshToken = req.body.refreshToken;
     //induced change
     // Clear access token and refresh token from database or session
     if (!refreshToken) {
