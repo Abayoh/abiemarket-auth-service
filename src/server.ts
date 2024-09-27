@@ -69,32 +69,35 @@ app.set("trust proxy", true);
 
 // Middleware to log response time
 app.use((req, res, next) => {
-  console.log(req.headers);
-  if (req.path === "/v1/health") return next(); //do not log health check requests from kubernetes
+  try {
+    if (req.path === "/v1/health") return next(); //do not log health check requests from kubernetes
 
-  req.requestId = req.headers["x-request-id"] as string;
-  res.setHeader("x-request-id", req.requestId);
-  req.forwardedForIp = req.headers["x-original-forwarded-for"] as string;
-  req.forwardedUserAgent = req.headers["x-forwarded-user-agent"] as string;
-  const startHrTime = process.hrtime();
+    req.requestId = req.headers["x-request-id"] as string;
+    res.setHeader("x-request-id", req.requestId);
+    req.forwardedForIp = req.headers["x-original-forwarded-for"] as string;
+    req.forwardedUserAgent = req.headers["x-forwarded-user-agent"] as string;
+    const startHrTime = process.hrtime();
 
-  res.on("finish", () => {
-    const elapsedHrTime = process.hrtime(startHrTime);
-    const elapsedTimeInMs = elapsedHrTime[0] * 1000 + elapsedHrTime[1] / 1e6;
+    res.on("finish", () => {
+      const elapsedHrTime = process.hrtime(startHrTime);
+      const elapsedTimeInMs = elapsedHrTime[0] * 1000 + elapsedHrTime[1] / 1e6;
 
-    if (req.path === "/v1/health") return; //do not log health check requests from kubernetes
+      if (req.path === "/v1/health") return; //do not log health check requests from kubernetes
 
-    logger.http(
-      `${req.method} ${req.url} ${res.statusCode} - ${elapsedTimeInMs} ms`
-    );
-  });
+      logger.http(
+        `${req.method} ${req.url} ${res.statusCode} - ${elapsedTimeInMs} ms`
+      );
+    });
 
-  next();
+    next();
+  } catch (e) {
+    next(e);
+  }
 });
 
 // Define a route
 app.get("/v1", (req, res) => {
-  res.send(`Hello, Auth Server ${os.hostname()}`);
+  res.send(`Welcome to Abiemarket API! `);
 });
 
 //kubernetes health check
