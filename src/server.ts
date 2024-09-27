@@ -95,11 +95,6 @@ app.use((req, res, next) => {
   }
 });
 
-// Define a route
-app.get("/v1", (req, res) => {
-  res.send(`Welcome to Abiemarket API! `);
-});
-
 //kubernetes health check
 app.get("/v1/health", (req, res) => {
   res.send("OK");
