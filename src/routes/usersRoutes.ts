@@ -1,6 +1,6 @@
-import { Router } from 'express';
-import can from '../middleware/can';
-import validateSchema from '../middleware/validateSchema';
+import { Router } from "express";
+import can from "../middleware/can";
+import validateSchema from "../middleware/validateSchema";
 
 import {
   addUserAddress,
@@ -14,9 +14,9 @@ import {
   verifyUserPhone,
   getUserAddresses,
   setAddressAsDefault,
-  getUserInfo
-} from '../controllers/usersController';
-import auth from '../middleware/authorize';
+  getUserInfo,
+} from "../controllers/usersController";
+import auth from "../middleware/authorize";
 
 import {
   changeUserEmailSchema,
@@ -25,57 +25,57 @@ import {
   newUserAddressSchema,
   verifyUserEmailSchema,
   verifyUserPhoneSchema,
-} from '../models/users/userRequestVerificationSchemas';
+} from "../models/users/userRequestVerificationSchemas";
 
 const router = Router();
 
 router
   .post(
-    '/addresses',
+    "/addresses",
     auth,
     validateSchema({ schema: newUserAddressSchema }),
     addUserAddress
   )
   .patch(
-    '/change-email',
+    "/change-email",
     auth,
     validateSchema({ schema: changeUserEmailSchema }),
     changeUserEmail
   )
   .patch(
-    '/change-password',
+    "/change-password",
     auth,
     validateSchema({ schema: changeUserPasswordSchema }),
     changeUserPassword
   )
   .patch(
-    '/change-phone',
+    "/change-phone",
     auth,
     validateSchema({ schema: changeUserPhoneSchema }),
     changeUserPhone
   )
-  .delete('/addresses/:addressId', auth, deleteUserAddress)
-  .get('/addresses/:addressId', auth, getUserAddress)
-  .get('/addresses', auth, getUserAddresses)
+  .delete("/addresses/:addressId", auth, deleteUserAddress)
+  .get("/addresses/:addressId", auth, getUserAddress)
+  .get("/addresses", auth, getUserAddresses)
   .put(
-    '/addresses/:addressId',
+    "/addresses/:addressId",
     auth,
     validateSchema({ schema: newUserAddressSchema }),
     updateUserAddress
   )
   .patch(
-    '/email/verify',
+    "/email/verify",
     auth,
     validateSchema({ schema: verifyUserEmailSchema }),
     verifyUserEmail
   )
   .patch(
-    '/phone/verify',
+    "/phone/verify",
     auth,
     validateSchema({ schema: verifyUserPhoneSchema }),
     verifyUserPhone
   )
-  .patch('/addresses/:addressId/default', auth, setAddressAsDefault)
-  .get('/info', auth, getUserInfo);
+  .patch("/addresses/:addressId/default", auth, setAddressAsDefault)
+  .get("/info", auth, getUserInfo);
 
 export default router;

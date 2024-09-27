@@ -69,6 +69,7 @@ app.set("trust proxy", true);
 
 // Middleware to log response time
 app.use((req, res, next) => {
+  console.log(req.headers);
   if (req.path === "/v1/health") return next(); //do not log health check requests from kubernetes
 
   req.requestId = req.headers["x-request-id"] as string;

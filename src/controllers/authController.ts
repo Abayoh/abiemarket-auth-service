@@ -201,7 +201,7 @@ export async function renewAccessToken(
   next: NextFunction
 ) {
   try {
-    // Retrieve refresh token from request body
+    // Retrieve refresh token from request body or session
     const refreshToken = req.body.refreshToken;
     const action = "renewAccessToken";
 
