@@ -3,42 +3,29 @@ import { AccessTokenClaims, verifyJWTToken } from "../lib/auth";
 import { AccessToken } from "../lib/types";
 import { CustomError } from "../lib/error";
 import { authErrorCodes } from "../lib/errorCodes";
-import { jwtSecretsLoader } from "../config/configurations";
+import logger from "../lib/logger";
+import { decodeUserClaimsFromBase64String } from "../lib/auth";
 
 const auth = async (req: Request, _: Response, next: NextFunction) => {
+  const user = req.headers["x-user"] as string;
+
   try {
-    const token = req.header("Authorization")?.replace("Bearer ", "");
-    if (!token) throw new CustomError(authErrorCodes.AUTH_UNAUTHORIZE);
-
-    let decodedResult = await verifyJWTToken<AccessToken>(
-      {
-        secret: jwtSecretsLoader.getConfig().newJwtSecert,
-        token,
-      },
-      jwtSecretsLoader.getConfig().oldJwtSecert
-    );
-
-    if (decodedResult.type === "error")
-      throw new CustomError(authErrorCodes.AUTH_UNAUTHORIZE);
-
-    if (decodedResult.type === "expired")
-      throw new CustomError(
-        authErrorCodes.AUTH_TOKEN_EXPIRED,
-        "access token expired"
-      );
-
-    const { payload } = decodedResult;
-
-    const user: AccessTokenClaims = {
-      sub: payload.sub,
-      roles: payload.roles,
-      name: payload.name,
-    };
-
-    req.user = user;
-    next();
-  } catch (error) {
-    next(error);
+    const userClaims = decodeUserClaimsFromBase64String(user);
+    req.user = userClaims;
+  } catch (e) {
+    const err = e as Error;
+    logger.warn(`${err.message}: ${user}`, {
+      action: "invalid_user_claims",
+      requestId: req.requestId,
+      userIdentifier: `${"anonymous"} `,
+      ipAddress: req.forwardedForIp,
+      endpoint: req.path,
+      httpMethod: req.method,
+      userAgent: req.forwardedUserAgent,
+      errorCode: "AUTH_INVALID_USER_CLAIMS",
+      statusCode: 401,
+    });
+    return next(new CustomError(authErrorCodes.AUTH_UNAUTHORIZE));
   }
 };
 

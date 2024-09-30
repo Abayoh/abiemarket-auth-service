@@ -886,6 +886,7 @@ export async function sendPasswordResetToken(
 }
 
 //private
+// signing in as a seller
 export async function grant(req: any, res: Response, next: NextFunction) {
   try {
     const { type, value, password, role } = req.body;

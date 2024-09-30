@@ -272,3 +272,27 @@ export async function sendSmsVerificationCode(
     throw err;
   }
 }
+
+export function decodeUserClaimsFromBase64String(
+  base64String: string
+): AccessTokenClaims {
+  //verify the string is base64
+  if (!Buffer.from(base64String, "base64").toString("base64")) {
+    throw new Error("Invalid base64 string");
+  }
+  const decodedString = Buffer.from(base64String, "base64").toString("ascii");
+
+  //check if is a valid JSON
+  try {
+    const user = JSON.parse(decodedString) as AccessTokenClaims;
+
+    //check if the user object has the required fields AccessTokenClaims
+    if (!user.sub || !user.name || !user.roles) {
+      throw new Error("Invalid user object");
+    }
+
+    return user;
+  } catch (error) {
+    throw new Error("Invalid JSON string");
+  }
+}

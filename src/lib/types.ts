@@ -49,17 +49,8 @@ export interface TokenParams<
 }
 
 export interface AccessTokenClaims {
-  /**
-   * The roles of the JWT.
-   */
-  roles: string[];
-  /**
-   * The sub claim is used to uniquely identify the JWT.
-   */
   sub: string;
-  /**
-   * The user name of the JWT.
-   * */
+  roles: string[];
   name: string;
 }
 

@@ -18,6 +18,7 @@ import { errorHandler } from "./lib/error";
 
 import { AccessTokenClaims } from "./lib/types";
 import { authConfigsLoader } from "./config/configurations";
+import { decodeUserClaimsFromBase64String } from "./lib/auth";
 
 declare global {
   namespace Express {
@@ -68,6 +69,7 @@ app.set("trust proxy", true);
 // }
 
 // Middleware to log response time
+
 app.use((req, res, next) => {
   try {
     if (req.path === "/v1/health") return next(); //do not log health check requests from kubernetes
@@ -76,7 +78,24 @@ app.use((req, res, next) => {
     res.setHeader("x-request-id", req.requestId);
     req.forwardedForIp = req.headers["x-original-forwarded-for"] as string;
     req.forwardedUserAgent = req.headers["x-forwarded-user-agent"] as string;
+
     const startHrTime = process.hrtime();
+
+    //Temporary IP whitelist
+    if (req.forwardedForIp !== "164.160.11.210") {
+      logger.warn(`Unauthorized IP address: ${req.forwardedForIp}`, {
+        action: "unauthorized_ip",
+        requestId: req.requestId,
+        userIdentifier: `${"anonymous"} `,
+        ipAddress: req.forwardedForIp,
+        endpoint: req.path,
+        httpMethod: req.method,
+        userAgent: req.forwardedUserAgent,
+        errorCode: "AUTH_UNAUTHORIZED_IP",
+        statusCode: 401,
+      });
+      return next(new CustomError(authErrorCodes.AUTH_UNAUTHORIZE));
+    }
 
     res.on("finish", () => {
       const elapsedHrTime = process.hrtime(startHrTime);
