@@ -180,4 +180,8 @@ export const authErrorCodesMap: ErrorCodeToStatusAndMessageMap = {
     message: "Invalid client token",
     status: 401,
   },
+  AUTH_INVALID_TOKEN: {
+    message: "Invalid token",
+    status: 401,
+  },
 };
