@@ -1256,6 +1256,8 @@ export async function verifyToken(
   try {
     const { token, type } = req.body;
 
+    console.log(token, type);
+
     const tokenType = type as TokenTypes;
 
     const decodedResult = await verifyJWTToken(
