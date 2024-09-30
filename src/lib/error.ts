@@ -135,8 +135,8 @@ export function errorHandler(
   } else {
     logger.error(err.message, {
       stack: err.stack,
-      statusCode: authErrorCodesMap[authErrorCodes.AUTH_DB_ERROR].status,
-      action: "mongoose_validation_error",
+      statusCode: authErrorCodesMap[authErrorCodes.AUTH_UNKNOWN_ERROR].status,
+      action: "internal_server_error",
       endpoint: req.path,
       httpMethod: req.method,
       userAgent: req.forwardedUserAgent,
