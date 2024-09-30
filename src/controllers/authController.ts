@@ -1269,7 +1269,7 @@ export async function verifyToken(
     );
 
     if (decodedResult.type === "error") {
-      logger.security(`Invalid ${tokenType} token`, {
+      logger.security(`${decodedResult.error}-tokenType:${tokenType}`, {
         action: "verifyToken",
         requestId: req.requestId,
         userIdentifier: token,
