@@ -32,7 +32,12 @@ import {
   twilioSecrets,
   emailSecrets,
   authConfigsLoader,
+  jwtSecretsLoader,
 } from "../config/configurations";
+
+interface JOSEError {
+  code: string;
+}
 
 /** Issues a RefreshToken. By default, the RefreshToken is encrypted using "A256GCM". */
 export async function generateJWTToken<
@@ -62,9 +67,7 @@ export async function verifyJWTToken<
     if (!token) {
       return { type: "error", error: "no token provided" };
     }
-
     const encryptionSecret = await getDerivedEncryptionKey(secret);
-
     const { payload } = await jwtDecrypt(token, encryptionSecret, {
       clockTolerance: 15,
     });
@@ -77,27 +80,48 @@ export async function verifyJWTToken<
 
     return { type: "success", payload: payload as unknown as T };
   } catch (error) {
+    const err = error as JOSEError;
     try {
       if (!token) {
         return { type: "error", error: "no token provided" };
       }
-      //try the old secret
-      const encryptionSecret = await getDerivedEncryptionKey(oldSecret);
 
-      const { payload } = await jwtDecrypt(token, encryptionSecret, {
-        clockTolerance: 15,
-      });
-
-      if (hasExpired(payload?.exp || 0)) {
+      if (err.code === "ERR_JWT_EXPIRED") {
         return { type: "expired" };
       }
-    } catch (err) {
-      return { type: "error", error };
+
+      if (err.code === "ERR_JWE_DECRYPTION_FAILED") {
+        //try the old secret
+        const encryptionSecret = await getDerivedEncryptionKey(oldSecret);
+
+        const { payload } = await jwtDecrypt(token, encryptionSecret, {
+          clockTolerance: 15,
+        });
+      }
+    } catch (error) {
+      const err2 = error as JOSEError;
+
+      if (err2.code === "ERR_JWT_EXPIRED") {
+        return { type: "expired" };
+      }
+      if (err2.code === "ERR_JWE_DECRYPTION_FAILED") {
+        return { type: "error", error: "wrong-secret" };
+      }
     }
 
-    return { type: "error", error };
+    return { type: "error", error: "invalid token" };
   }
 }
+
+// verifyJWTToken(
+//   {
+//     token:
+//       "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..yVwaX_EvNjPoUrNx.PsVk15Y-bPO_5S62sci01XTrsvTlDpmyXOrO8Zg6TqF4q9CPyd3MI8yF0Kn8T02R1sd0roZMlF56Izwvxic5l_FhPa4PjRexPejpJy8qGbeeUpMFh9Hem1xGkx70qShdE2oAi0aXcHgV2kQiBk6dHvlB1RTdVrcSfkVQlSHd5iJQUcNGRLRtWCSxGKNlbtdBD57z0_jr1ndb5u-BdT1zcGoEa-Sv0Hi-yFL2nCv7pqZpKBrw0fIe0_2dyzg.A0GBnPaMLuvk9Krhwd5Qzg",
+//     secret:
+//       "29961e8e7f3a3a08a4aa888d98f98b3bba01e5da37c5aa44dc51b124f0db5d0d",
+//   },
+//   jwtSecretsLoader.getConfig().oldJwtSecert
+// )
 
 type DecodeResult<T> =
   | SuccessDecodeResult<T>
