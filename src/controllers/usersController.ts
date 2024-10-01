@@ -599,7 +599,7 @@ export async function verifyUserPhone(
     //TODO: send sms to the user to notify them that their Phone number has been changed
     //TODO: Sign in the user
     // Return success response
-    res.json({ ...responseDefault, messages: ["phone number changed"] });
+    res.json({ ...responseDefault, message: "phone number changed" });
   } catch (error) {
     next(error);
   }

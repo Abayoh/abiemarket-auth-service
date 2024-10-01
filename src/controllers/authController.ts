@@ -390,7 +390,7 @@ export async function signout(req: Request, res: Response, next: NextFunction) {
       if (!cachedRefreshToken) {
         return res.status(200).json({
           ...responseDefault,
-          messages: ["logout-successful"],
+          message: "logout-successful",
           result: {},
         });
       }
@@ -407,7 +407,7 @@ export async function signout(req: Request, res: Response, next: NextFunction) {
     // For example, if you are using express-session: req.session.accessToken = null; req.session.refreshToken = null;
     res.status(200).json({
       ...responseDefault,
-      messages: ["logout-successful"],
+      message: "logout-successful",
       result: {},
     });
   } catch (error) {
@@ -857,7 +857,7 @@ export async function resetPassword(
     // Return success response
     res.json({
       ...responseDefault,
-      messages: ["password reset successfully"],
+      message: "password reset successfully",
     });
   } catch (error) {
     // If an error occurs at any point in the try block, call the next middleware function with the error
@@ -878,7 +878,7 @@ export async function sendPasswordResetToken(
     // If everything is successful, return a 201 Created response with the token in the response body
     res
       .status(201)
-      .json({ ...responseDefault, messages: ["password reset code sent"] });
+      .json({ ...responseDefault, message: "password reset code sent" });
   } catch (error) {
     // If an error occurs at any point in the try block, call the next middleware function with the error
     next(error);
