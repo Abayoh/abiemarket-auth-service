@@ -314,8 +314,10 @@ export async function addUserAddress(
     const addedAddress =
       updatedUser.addresses?.[updatedUser.addresses.length - 1];
 
+    const addressId = addedAddress?._id;
+
     // Return a success response
-    res.status(201).json({ ...responseDefault, result: { ...addedAddress } });
+    res.status(201).json({ ...responseDefault, result: { ...newAddress } });
   } catch (error) {
     // Pass any errors to the Express error handler
     next(error);
