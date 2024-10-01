@@ -12,6 +12,7 @@ const auth = async (req: Request, _: Response, next: NextFunction) => {
   try {
     const userClaims = decodeUserClaimsFromBase64String(user);
     req.user = userClaims;
+    next();
   } catch (e) {
     const err = e as Error;
     logger.warn(`${err.message}: ${user}`, {
