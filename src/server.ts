@@ -82,7 +82,8 @@ app.use((req, res, next) => {
     const startHrTime = process.hrtime();
 
     //Temporary IP whitelist
-    if (req.forwardedForIp !== "164.160.11.210") {
+    const ipWhitelist = ["196.250.182.196", "164.160.11.210"];
+    if (ipWhitelist && !ipRangeCheck(req.forwardedForIp, ipWhitelist)) {
       logger.warn(`Unauthorized IP address: ${req.forwardedForIp}`, {
         action: "unauthorized_ip",
         requestId: req.requestId,
