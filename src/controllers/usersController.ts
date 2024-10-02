@@ -112,7 +112,8 @@ export async function changeUserPassword(
 
     res.status(200).json({
       ...responseDefault,
-      result: { message: "User Password successfully changed" },
+      result: {},
+      message: "User Password successfully changed",
     });
   } catch (error) {
     next(error);
@@ -151,7 +152,8 @@ export async function changeUserEmail(
 
     res.status(200).json({
       ...responseDefault,
-      result: { message: "Email verification token sent successfully" },
+      result: {},
+      message: "Email verification token sent successfully",
     });
   } catch (error) {
     next(error);

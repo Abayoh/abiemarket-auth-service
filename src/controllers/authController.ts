@@ -99,7 +99,7 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
       type: "at",
       claims: {
         sub: user._id,
-        name: `${user.name.fname} ${user.name.lname}`,
+        name: `${user.name}`,
         roles,
       },
       maxAge: authConfigsLoader.getConfig().atMaxAge,
@@ -126,7 +126,7 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
         _sot: type,
         val: value,
         roles,
-        name: `${user.name.fname} ${user.name.lname}`,
+        name: `${user.name}`,
       },
       maxAge: authConfigsLoader.getConfig().stMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
@@ -136,7 +136,7 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
     const storedRT = await refreshsSchema.create({
       refreshToken,
       userId: user._id,
-      name: `${user.name.fname} ${user.name.lname}`,
+      name: `${user.name}`,
       _sot: type,
       val: value,
       roles,
@@ -180,7 +180,7 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
           token: SessionToken,
           user: {
             sub: user._id,
-            name: `${user.name.fname} ${user.name.lname}`,
+            name: `${user.name} `,
             _sot: type,
             val: value,
             roles,
@@ -443,7 +443,7 @@ export async function revokeToken(
 export async function signup(req: Request, res: Response, next: NextFunction) {
   try {
     validateRequestBody(signUpSchema, req.body);
-    const { password, fname, lname, mname, type, value, code } = req.body;
+    const { password, name, type, value, code } = req.body;
     const action = "signup";
 
     // Check if the value (phone number or email) is already taken
@@ -492,14 +492,6 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
 
     // Hash the password
     const hashedPassword = await hashPassword(password);
-    let middleName = {};
-    if (mname) middleName = { mname };
-
-    const name = {
-      fname,
-      lname,
-      ...middleName,
-    };
 
     // Create a new user with the provided email, hashed password, and name
     const newUser = await UserSchema.create({
@@ -562,7 +554,7 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
       refreshToken,
       userId: newUser._id,
       roles: ["shopper"],
-      name: `${newUser.name.fname} ${newUser.name.lname}`,
+      name: `${newUser.name}`,
       _sot: type,
       val: value,
       expires: exp,
@@ -585,7 +577,7 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
           token: sessionToken,
           user: {
             sub: newUser._id,
-            name: `${newUser.name.fname} ${newUser.name.lname}`,
+            name: `${newUser.name} `,
             roles: ["shopper"],
             _sot: type,
             val: value,
@@ -706,7 +698,7 @@ export async function sellerSignin(
       refreshToken,
       userId: user._id,
       roles,
-      name: `${user.name.fname} ${user.name.lname}`,
+      name: `${user.name}`,
       _sot: type,
       val: value,
       expires: fromDate(authConfigsLoader.getConfig().rtMaxAge),
@@ -719,7 +711,7 @@ export async function sellerSignin(
       claims: {
         sub: user._id,
         roles,
-        name: `${user.name.fname} ${user.name.lname}`,
+        name: `${user.name}`,
       },
       maxAge: authConfigsLoader.getConfig().atMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
@@ -735,7 +727,7 @@ export async function sellerSignin(
         roles,
         _sot: type,
         val: value,
-        name: `${user.name.fname} ${user.name.lname}`,
+        name: `${user.name}`,
       },
       maxAge: authConfigsLoader.getConfig().stMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
@@ -757,7 +749,7 @@ export async function sellerSignin(
           token: sessionToken,
           user: {
             sub: user._id,
-            name: `${user.name.fname} ${user.name.lname}`,
+            name: `${user.name} `,
             roles,
             _sot: type,
             val: value,
@@ -964,7 +956,7 @@ export async function grant(req: any, res: Response, next: NextFunction) {
       claims: {
         sub,
         roles,
-        name: `${user.name.fname} ${user.name.lname}`,
+        name: `${user.name}`,
       },
       maxAge: 1200,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
@@ -980,7 +972,7 @@ export async function grant(req: any, res: Response, next: NextFunction) {
         roles,
         _sot: type,
         val: value,
-        name: `${user.name.fname} ${user.name.lname}`,
+        name: `${user.name}`,
       },
       maxAge: authConfigsLoader.getConfig().stMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
@@ -997,7 +989,7 @@ export async function grant(req: any, res: Response, next: NextFunction) {
           token: sessionToken,
           user: {
             sub,
-            name: `${user.name.fname} ${user.name.lname}`,
+            name: `${user.name}`,
             roles,
             _sot: type,
             val: value,

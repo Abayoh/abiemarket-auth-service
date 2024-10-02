@@ -1,16 +1,16 @@
-import Joi from 'joi';
-import mongoose from 'mongoose';
+import Joi from "joi";
+import mongoose from "mongoose";
 /**
  * Defines a union type for user roles.
  * Possible values include 'shopper' and 'seller'.
  */
-export type Roles = 'shopper' | 'seller';
+export type Roles = "shopper" | "seller";
 
 /**
  * Defines a union type for address kinds.
  * Possible values include 'home' and 'work'.
  */
-export type AddressKind = 'home' | 'work';
+export type AddressKind = "home" | "work";
 
 /**
  * Interface representing a user's name.
@@ -37,8 +37,8 @@ export interface IName {
  */
 export interface IAddress {
   /**
- * The unique identifier of the address.
- */
+   * The unique identifier of the address.
+   */
   _id: mongoose.Types.ObjectId;
   /**
    * The recipient's name.
@@ -118,7 +118,7 @@ export interface IUser {
   /**
    * The user's name.
    */
-  name: IName;
+  name: string;
 
   /**
    * The user's phone number.
@@ -166,29 +166,28 @@ export interface IUser {
  * This exports a Joi schema for validating user sign up requests.
  */
 export const signUpSchema = Joi.object({
-  type: Joi.any().valid('phone', 'email').required(),
-  value: Joi.when('type', {
-    is: 'email',
+  type: Joi.any().valid("phone", "email").required(),
+  value: Joi.when("type", {
+    is: "email",
     then: Joi.string().email().required(),
-    otherwise: Joi.string().pattern(/^[0-9]+$/).required()
+    otherwise: Joi.string()
+      .pattern(/^[0-9]+$/)
+      .required(),
   }),
   password: Joi.string().min(8).required(),
-  fname: Joi.string().required(),
-  lname: Joi.string().required(),
-  mname: Joi.string().allow(''),
+  name: Joi.string().required(),
   code: Joi.string().required(),
 });
 
-
 export const signInSchema = Joi.object({
-  type: Joi.string().valid('phone', 'email').required(),
-  value: Joi.when('type', {
-    is: 'email',
+  type: Joi.string().valid("phone", "email").required(),
+  value: Joi.when("type", {
+    is: "email",
     then: Joi.string().email().required(),
-    otherwise: Joi.string().required()
+    otherwise: Joi.string().required(),
   }),
-  password: Joi.string().required()
-})
+  password: Joi.string().required(),
+});
 
 export const addressSchema = Joi.object({
   name: Joi.string().required(),
@@ -198,7 +197,7 @@ export const addressSchema = Joi.object({
   state: Joi.string().required(),
   country: Joi.string().required(),
   zip: Joi.number().required(),
-  kind: Joi.string().valid(...['home', 'work']),
+  kind: Joi.string().valid(...["home", "work"]),
   phone: Joi.string().required(),
 });
 
