@@ -15,6 +15,7 @@ import {
   getUserAddresses,
   setAddressAsDefault,
   getUserInfo,
+  changeUserName,
 } from "../controllers/usersController";
 import auth from "../middleware/authorize";
 
@@ -76,6 +77,7 @@ router
     verifyUserPhone
   )
   .patch("/addresses/:addressId/default", auth, setAddressAsDefault)
-  .get("/info", auth, getUserInfo);
+  .get("/info", auth, getUserInfo)
+  .patch("/username", auth, changeUserName);
 
 export default router;

@@ -1,5 +1,5 @@
-import { verify } from 'crypto';
-import Joi from 'joi';
+import { verify } from "crypto";
+import Joi from "joi";
 
 export const changeUserEmailSchema = Joi.object({
   email: Joi.string().email().required(),
@@ -20,7 +20,7 @@ export const newUserAddressSchema = Joi.object({
   state: Joi.string().required(),
   country: Joi.string().required(),
   zip: Joi.string().required(),
-  kind: Joi.string().valid(...['home', 'work']),
+  kind: Joi.string().valid(...["home", "work"]),
   phone: Joi.string().required(),
   name: Joi.string().required(),
   landmark: Joi.string(),
@@ -35,4 +35,8 @@ export const verifyUserEmailSchema = Joi.object({
 export const verifyUserPhoneSchema = Joi.object({
   phone: Joi.string().required(),
   code: Joi.string().required(),
+});
+
+export const verifyUsernameChangeSchema = Joi.object({
+  name: Joi.string().required(),
 });

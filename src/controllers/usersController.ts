@@ -12,6 +12,7 @@ import { responseDefault } from "../lib/constants";
 import mongoose from "mongoose";
 import logger from "../lib/logger";
 import { log } from "console";
+import { verifyUsernameChangeSchema } from "../models/users/userRequestVerificationSchemas";
 
 export async function getUserInfo(
   req: Request,
@@ -203,7 +204,7 @@ export async function changeUserName(
   try {
     const userId = req.user.sub;
     const { name } = req.body;
-
+    verifyUsernameChangeSchema.validateAsync({ name });
     //check if the user already exists
     const user = await UserSchema.findOne({ _id: userId });
 
