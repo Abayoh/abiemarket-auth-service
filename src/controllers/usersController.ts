@@ -202,7 +202,7 @@ export async function changeUserName(
 ) {
   try {
     const userId = req.user.sub;
-    const { fname, lname, mname } = req.body;
+    const { name } = req.body;
 
     //check if the user already exists
     const user = await UserSchema.findOne({ _id: userId });
@@ -223,15 +223,14 @@ export async function changeUserName(
       throw new CustomError(authErrorCodes.AUTH_USER_NOT_FOUND);
     }
 
-    if (fname.trim()) user.name.fname = fname;
-    if (lname.trim()) user.name.lname = lname;
-    if (mname.trim()) user.name.mname = mname;
+    if (name.trim()) user.name = name;
 
     await user.save();
 
     res.json({
       ...responseDefault,
-      result: { message: "User name successfully changed" },
+      result: {},
+      message: "User name successfully changed",
     });
   } catch (error) {
     next(error);
