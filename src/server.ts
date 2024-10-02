@@ -17,8 +17,6 @@ import authorize from "./middleware/authorize";
 import { errorHandler } from "./lib/error";
 
 import { AccessTokenClaims } from "./lib/types";
-import { authConfigsLoader } from "./config/configurations";
-import { decodeUserClaimsFromBase64String } from "./lib/auth";
 
 declare global {
   namespace Express {

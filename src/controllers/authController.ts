@@ -519,7 +519,7 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
     const accessToken = await generateJWTToken<AccessTokenClaims>({
       audience: "abiemarket",
       type: "at",
-      claims: { sub: newUser._id, roles, name: `${name.fname} ${name.lname}` },
+      claims: { sub: newUser._id, roles, name: `${name} ` },
       maxAge: authConfigsLoader.getConfig().atMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
     });
@@ -541,7 +541,7 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
         roles,
         _sot: type,
         val: value,
-        name: `${name.fname} ${name.lname}`,
+        name: `${name}`,
       },
       maxAge: authConfigsLoader.getConfig().stMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
