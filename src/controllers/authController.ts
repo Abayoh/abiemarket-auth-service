@@ -1381,9 +1381,9 @@ export async function verifyOTP(
   next: NextFunction
 ) {
   try {
-    const { otp, type, value } = req.body;
+    const { code, type, value } = req.body;
 
-    await verifyVerificationTokenHandler(type, value, otp, req);
+    await verifyVerificationTokenHandler(type, value, code, req);
 
     res.status(204).json({
       ...responseDefault,
