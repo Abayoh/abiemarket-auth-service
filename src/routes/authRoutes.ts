@@ -17,6 +17,7 @@ import {
   makeUserSeller,
   generateClientToken,
   verifyToken,
+  verifyOTP,
 } from "../controllers/authController";
 
 const router = Router();
@@ -37,6 +38,7 @@ router
   .post("/session", session)
   .post("/make-user-seller", makeUserSeller)
   .post("/generate-client-token", generateClientToken)
-  .post("/verify-token", verifyToken);
+  .post("/verify-token", verifyToken)
+  .post("/verify-otp", verifyOTP);
 
 export default router;

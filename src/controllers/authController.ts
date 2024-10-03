@@ -1374,3 +1374,23 @@ export async function verifyToken(
     next(error);
   }
 }
+
+export async function verifyOTP(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { otp, type, value } = req.body;
+
+    await verifyVerificationTokenHandler(type, value, otp, req);
+
+    res.status(204).json({
+      ...responseDefault,
+      result: {},
+      message: "verification token verified",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
