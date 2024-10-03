@@ -1385,7 +1385,7 @@ export async function verifyOTP(
 
     await verifyVerificationTokenHandler(type, value, code, req);
 
-    res.status(204).json({
+    res.status(200).json({
       ...responseDefault,
       result: {},
       message: "verification token verified",
