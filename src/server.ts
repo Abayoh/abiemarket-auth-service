@@ -79,22 +79,22 @@ app.use((req, res, next) => {
 
     const startHrTime = process.hrtime();
 
-    //Temporary IP whitelist
-    const ipWhitelist = ["196.250.182.196", "164.160.11.210"];
-    if (ipWhitelist && !ipRangeCheck(req.forwardedForIp, ipWhitelist)) {
-      logger.warn(`Unauthorized IP address: ${req.forwardedForIp}`, {
-        action: "unauthorized_ip",
-        requestId: req.requestId,
-        userIdentifier: `${"anonymous"} `,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: "AUTH_UNAUTHORIZED_IP",
-        statusCode: 401,
-      });
-      return next(new CustomError(authErrorCodes.AUTH_UNAUTHORIZE));
-    }
+    // //Temporary IP whitelist
+    // const ipWhitelist = ["196.250.182.196", "164.160.11.210"];
+    // if (ipWhitelist && !ipRangeCheck(req.forwardedForIp, ipWhitelist)) {
+    //   logger.warn(`Unauthorized IP address: ${req.forwardedForIp}`, {
+    //     action: "unauthorized_ip",
+    //     requestId: req.requestId,
+    //     userIdentifier: `${"anonymous"} `,
+    //     ipAddress: req.forwardedForIp,
+    //     endpoint: req.path,
+    //     httpMethod: req.method,
+    //     userAgent: req.forwardedUserAgent,
+    //     errorCode: "AUTH_UNAUTHORIZED_IP",
+    //     statusCode: 401,
+    //   });
+    //   return next(new CustomError(authErrorCodes.AUTH_UNAUTHORIZE));
+    // }
 
     res.on("finish", () => {
       const elapsedHrTime = process.hrtime(startHrTime);
