@@ -23,7 +23,7 @@ export const newUserAddressSchema = Joi.object({
   kind: Joi.string().valid(...["home", "work"]),
   phone: Joi.string().required(),
   name: Joi.string().required(),
-  landmark: Joi.string(),
+  landmark: Joi.string().optional(),
   isDefault: Joi.boolean(),
 });
 
