@@ -255,6 +255,8 @@ export async function addUserAddress(
     const userId = req.user.sub;
     let newAddress: IAddress = req.body;
 
+    let setAsDefault = newAddress.isDefault;
+
     newAddress = {
       ...newAddress,
       _id: new mongoose.Types.ObjectId(),
@@ -283,6 +285,15 @@ export async function addUserAddress(
     // If the user's addresses property is undefined or null, create an empty array for it
     if (!user.addresses) {
       user.addresses = [];
+    }
+
+    if (setAsDefault) {
+      user.addresses = user.addresses.map((address) => {
+        if (address.isDefault) {
+          address.isDefault = false;
+        }
+        return address;
+      });
     }
 
     // Add the new address to the user's list of addresses
