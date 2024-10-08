@@ -18,11 +18,6 @@ const addressSchema: Schema = new Schema<IAddress>({
   email: { type: String },
 });
 
-const nameSchema: Schema = new Schema<IName>({
-  fname: { type: String, require: [true, "first Name is requrie"] },
-  lname: { type: String, require: [true, "last name is require"] },
-  mname: { type: String },
-});
 
 const userSchema: Schema = new Schema({
   name: {

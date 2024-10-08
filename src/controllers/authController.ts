@@ -1279,17 +1279,17 @@ export async function verifyToken(
     }
 
     if (decodedResult.type === "expired") {
-      logger.security(`Expired ${tokenType} token`, {
-        action: "verifyToken",
-        requestId: req.requestId,
-        userIdentifier: token,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_TOKEN_EXPIRED,
-        statusCode: authErrorCodesMap[authErrorCodes.AUTH_TOKEN_EXPIRED].status,
-      });
+      // logger.security(`Expired ${tokenType} token`, {
+      //   action: "verifyToken",
+      //   requestId: req.requestId,
+      //   userIdentifier: token,
+      //   ipAddress: req.forwardedForIp,
+      //   endpoint: req.path,
+      //   httpMethod: req.method,
+      //   userAgent: req.forwardedUserAgent,
+      //   errorCode: authErrorCodes.AUTH_TOKEN_EXPIRED,
+      //   statusCode: authErrorCodesMap[authErrorCodes.AUTH_TOKEN_EXPIRED].status,
+      // });
       throw new CustomError(
         authErrorCodes.AUTH_TOKEN_EXPIRED,
         `${tokenType} token expired`
