@@ -72,8 +72,6 @@ export async function verifyJWTToken<
       clockTolerance: 15,
     });
 
-    console.log(payload);
-
     if (hasExpired(payload?.exp || 0)) {
       return { type: "expired" };
     }
