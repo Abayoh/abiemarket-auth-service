@@ -103,7 +103,7 @@ app.use((req, res, next) => {
       if (req.path === "/v1/health") return; //do not log health check requests from kubernetes
 
       logger.http(
-        `${req.method} ${req.url} ${res.statusCode} - ${elapsedTimeInMs} ms`
+        `${req.method} ${req.url} ${res.statusCode} - ${elapsedTimeInMs} ms - requestId:${req.requestId}`
       );
     });
 
