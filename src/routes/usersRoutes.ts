@@ -56,7 +56,7 @@ router
     changeUserPhone
   )
   .delete("/addresses/:addressId", auth, deleteUserAddress)
-  .get("/addresses/:addressId", auth, getUserAddress)
+  .get("/addresses/get-addr", auth, getUserAddress)
   .get("/addresses", auth, getUserAddresses)
   .put(
     "/addresses/:addressId",

@@ -463,35 +463,139 @@ export async function getUserAddress(
   next: NextFunction
 ) {
   try {
-    const { addressId } = req.params;
-    const userId = req.user.sub;
-
-    const address = await UserSchema.findOne(
-      { _id: userId },
-      { addresses: { $elemMatch: { _id: addressId } }, _id: 0 }
-    ).lean();
-
-    if (!address) {
-      logger.warn("User address cannot be retrieved! User address not found", {
-        action: "getUserAddress",
-        requestId: req.requestId,
-        userIdentifier: userId,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_ADDRESS_NOT_FOUND].status,
-      });
+    const { addressId, da: defaultAddress } = req.query;
+    if (defaultAddress && addressId) {
+      logger.warn(
+        "Invalid query parameters! Both defaultAddress and addressId cannot be used together",
+        {
+          action: "getUserAddress",
+          requestId: req.requestId,
+          userIdentifier: req.user.sub,
+          ipAddress: req.forwardedForIp,
+          endpoint: req.path,
+          httpMethod: req.method,
+          userAgent: req.forwardedUserAgent,
+          errorCode: authErrorCodes.AUTH_BAD_REQUEST,
+          statusCode: authErrorCodesMap[authErrorCodes.AUTH_BAD_REQUEST].status,
+        }
+      );
       throw new CustomError(
-        authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
-        "An error occurs while retreving user address"
+        authErrorCodes.AUTH_BAD_REQUEST,
+        "Invalid query parameters! Both defaultAddress and addressId cannot be used together"
       );
     }
 
-    // Return success response
-    res.json({ ...responseDefault, result: { address: address.addresses[0] } });
+    if (!defaultAddress && !addressId) {
+      logger.warn(
+        "Invalid query parameters! Either defaultAddress or addressId must be used",
+        {
+          action: "getUserAddress",
+          requestId: req.requestId,
+          userIdentifier: req.user.sub,
+          ipAddress: req.forwardedForIp,
+          endpoint: req.path,
+          httpMethod: req.method,
+          userAgent: req.forwardedUserAgent,
+          errorCode: authErrorCodes.AUTH_BAD_REQUEST,
+          statusCode: authErrorCodesMap[authErrorCodes.AUTH_BAD_REQUEST].status,
+        }
+      );
+      throw new CustomError(
+        authErrorCodes.AUTH_BAD_REQUEST,
+        "Invalid query parameters! Either da:defaultAddress or addressId must be used"
+      );
+    }
+
+    if (defaultAddress) {
+      const userId = req.user.sub;
+
+      const address = await UserSchema.findOne(
+        { _id: userId, "addresses.isDefault": true },
+        { addresses: { $elemMatch: { isDefault: true } }, _id: 0 }
+      ).lean();
+
+      if (!address) {
+        logger.warn(
+          "User address cannot be retrieved! User address not found",
+          {
+            action: "getUserAddress",
+            requestId: req.requestId,
+            userIdentifier: userId,
+            ipAddress: req.forwardedForIp,
+            endpoint: req.path,
+            httpMethod: req.method,
+            userAgent: req.forwardedUserAgent,
+            errorCode: authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
+            statusCode:
+              authErrorCodesMap[authErrorCodes.AUTH_ADDRESS_NOT_FOUND].status,
+          }
+        );
+        throw new CustomError(
+          authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
+          "An error occurs while retreving user address"
+        );
+      }
+
+      // Return success response
+      res.json({
+        ...responseDefault,
+        result: { address: address.addresses[0] },
+      });
+    } else if (addressId) {
+      const userId = req.user.sub;
+
+      const address = await UserSchema.findOne(
+        { _id: userId },
+        { addresses: { $elemMatch: { _id: addressId } }, _id: 0 }
+      ).lean();
+
+      if (!address) {
+        logger.warn(
+          "User address cannot be retrieved! User address not found",
+          {
+            action: "getUserAddress",
+            requestId: req.requestId,
+            userIdentifier: userId,
+            ipAddress: req.forwardedForIp,
+            endpoint: req.path,
+            httpMethod: req.method,
+            userAgent: req.forwardedUserAgent,
+            errorCode: authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
+            statusCode:
+              authErrorCodesMap[authErrorCodes.AUTH_ADDRESS_NOT_FOUND].status,
+          }
+        );
+        throw new CustomError(
+          authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
+          "An error occurs while retreving user address"
+        );
+      }
+
+      // Return success response
+      res.json({
+        ...responseDefault,
+        result: { address: address.addresses[0] },
+      });
+    } else {
+      logger.warn(
+        "Invalid query parameters! Either defaultAddress or addressId must be used",
+        {
+          action: "getUserAddress",
+          requestId: req.requestId,
+          userIdentifier: req.user.sub,
+          ipAddress: req.forwardedForIp,
+          endpoint: req.path,
+          httpMethod: req.method,
+          userAgent: req.forwardedUserAgent,
+          errorCode: authErrorCodes.AUTH_BAD_REQUEST,
+          statusCode: authErrorCodesMap[authErrorCodes.AUTH_BAD_REQUEST].status,
+        }
+      );
+      throw new CustomError(
+        authErrorCodes.AUTH_BAD_REQUEST,
+        "Invalid query parameters! Either da:defaultAddress or addressId must be used"
+      );
+    }
   } catch (error) {
     next(error);
   }
