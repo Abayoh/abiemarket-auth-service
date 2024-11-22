@@ -18,9 +18,10 @@ export class AppError extends Error {
   readonly errorLogSeverity: LogSeverity;
   readonly errorLogLevel: LogLevel;
   readonly where: string | undefined;
-  neededActions: string[] | undefined;
-  readonly additionalInfo: string;
+  neededActions: string[] | undefined; // This should also be mutable in other parts of the code
   readonly originalError: any;
+  readonly additionalInfo: any;
+  readonly resMessage: string;
 
   constructor(
     code: string,
@@ -30,7 +31,7 @@ export class AppError extends Error {
       logLevel: LogLevel;
       where?: string;
       neededActions?: string[];
-      additionalInfo?: string;
+      additionalInfo?: any;
     },
     error?: any // Original error if available
   ) {
@@ -41,10 +42,10 @@ export class AppError extends Error {
     };
 
     // Set the error message: either from `error`, `message`, or the map's default
-    const errorMessage = error?.message || message || statusAndMessage.message;
+    const errorMessage = message || statusAndMessage.message;
 
     // Call the parent constructor with the error message
-    super(errorMessage);
+    super(error?.message || message || statusAndMessage.message);
 
     this.code = code;
     this.status = statusAndMessage.status;
@@ -54,7 +55,8 @@ export class AppError extends Error {
     this.where = logMeta?.where || "error";
     this.neededActions = logMeta?.neededActions || [];
     this.originalError = error;
-    this.additionalInfo = logMeta?.additionalInfo || "";
+    this.additionalInfo = logMeta?.additionalInfo;
+    this.resMessage = errorMessage;
 
     // Preserve the original error stack if it exists, otherwise capture new stack trace
     if (error?.stack) {
@@ -74,7 +76,7 @@ export class AppError extends Error {
       success: false,
       error: {
         name: this.name,
-        message: this.message,
+        message: this.resMessage || "Internal server error",
         code: this.code,
         status: this.status,
         ...stackTrace,
