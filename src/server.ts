@@ -2,8 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import dbConfig from "./config/dbConfig";
-import { CustomError } from "./lib/error";
-import { authErrorCodes, authErrorCodesMap } from "./lib/errorCodes";
+import { authErrorCodes } from "./error/errorCodes";
 import logger from "./lib/logger";
 import os from "os";
 import ipRangeCheck from "ip-range-check";
@@ -11,12 +10,12 @@ import ipRangeCheck from "ip-range-check";
 import authRoutes from "./routes/authRoutes";
 import usersRoutes from "./routes/usersRoutes";
 // middleware
-import authorize from "./middleware/authorize";
 
 //error handler
-import { errorHandler } from "./lib/error";
+import { errorHandler } from "./error/errorHandlerMiddleware";
 
 import { AccessTokenClaims } from "./lib/types";
+import { AppError } from "./error/AppError";
 
 declare global {
   namespace Express {
@@ -25,6 +24,7 @@ declare global {
       requestId: string;
       forwardedForIp: string;
       forwardedUserAgent: string;
+      service: string;
     }
   }
 }
@@ -32,7 +32,7 @@ declare global {
 dotenv.config();
 dbConfig();
 const app = express();
-const port = 80;
+const port = 81;
 
 app.use(cors());
 
@@ -95,6 +95,7 @@ app.use((req, res, next) => {
     //   });
     //   return next(new CustomError(authErrorCodes.AUTH_UNAUTHORIZE));
     // }
+    req.service = "Auth Service";
 
     res.on("finish", () => {
       const elapsedHrTime = process.hrtime(startHrTime);
@@ -125,18 +126,15 @@ app.use("/v1/auth", authRoutes);
 app.use("/v1/users", usersRoutes);
 
 app.use((req, res, next) => {
-  logger.warn(`Route not found: ${req.url}`, {
-    action: "route_not_found",
-    requestId: req.requestId,
-    userIdentifier: `${"anonymous"} `,
-    ipAddress: req.forwardedForIp,
-    endpoint: req.path,
-    httpMethod: req.method,
-    userAgent: req.forwardedUserAgent,
-    errorCode: authErrorCodes.AUTH_ROUTE_NOT_FOUND,
-    statusCode: authErrorCodesMap[authErrorCodes.AUTH_ROUTE_NOT_FOUND].status,
-  });
-  next(new CustomError(authErrorCodes.AUTH_ROUTE_NOT_FOUND));
+  next(
+    new AppError(authErrorCodes.AUTH_ROUTE_NOT_FOUND, undefined, {
+      logLevel: "warn",
+      errorLogSeverity: "major",
+      where: "routeNotfind",
+      neededActions: ["check suspecious activities"],
+      additionalInfo: "The Route is unavailable",
+    })
+  );
 });
 
 //error Route

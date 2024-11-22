@@ -6,29 +6,14 @@
     "auditLog": "log/.c69d2a02ec2e97c6d1063291bb33347cfa4893f9-audit.json",
     "files": [
         {
-            "date": 1727196750672,
-            "name": "log/auth_service.log.2024-09-24",
-            "hash": "7ed2875d04dbd87b4ab8e9b7d29ae1586d0be3411eabf2f314ec7dd399940c25"
+            "date": 1732222573926,
+            "name": "log/auth_service.log.2024-11-21",
+            "hash": "57279eee143809bb869a91c36b52332d444b90eef87dbf0490de8933e9487db2"
         },
         {
-            "date": 1727245137028,
-            "name": "log/auth_service.log.2024-09-25",
-            "hash": "aa765332bb5e842f91a7f8e7bb3818ea3b10c2f1441edfd9194764fa188bf8b2"
-        },
-        {
-            "date": 1727358376049,
-            "name": "log/auth_service.log.2024-09-26",
-            "hash": "585a1f476e0a6e11e05b1c31ee229694bbbc8a9276c84e8b7e63f364767edb76"
-        },
-        {
-            "date": 1727722518390,
-            "name": "log/auth_service.log.2024-09-30",
-            "hash": "44856110b8f3938f3313b83f641d1abaa182694f4ed868a7f2e41d45678afd47"
-        },
-        {
-            "date": 1727796976223,
-            "name": "log/auth_service.log.2024-10-01",
-            "hash": "c4998367f8e9ac9588edd52d0fc7a7019d3019ed65dd4b57803bbd3cc1ff3059"
+            "date": 1732252717402,
+            "name": "log/auth_service.log.2024-11-22",
+            "hash": "4588ec2fa6b03afe473869c9af28dd83f508b33bca32bf9aaa08a45b3be3033f"
         }
     ],
     "hashType": "sha256"

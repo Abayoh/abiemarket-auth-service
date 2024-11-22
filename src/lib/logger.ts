@@ -1,10 +1,6 @@
 import winston from "winston";
 import DailyRotateFile from "winston-daily-rotate-file";
 import { logConfigs } from "../config/configurations";
-import { arraysAreDifferent } from "../utils";
-import { create } from "domain";
-import auth from "../middleware/authorize";
-
 // Define custom log levels
 const defaultLogLevels = {
   levels: {
@@ -36,13 +32,15 @@ export type LogLevel =
   | "security"
   | "http"
   | "transaction"
-  | "verbose"
   | "debug";
 
 export type LogLevels = Record<LogLevel, number>;
 
+export type LogSeverity = "critical" | "major" | "minor" | "info" | "security";
+
 export interface LogMetadata {
-  action: string;
+  service: string;
+  where: string;
   requestId: string;
   userIdentifier: string;
   ipAddress: string;
@@ -51,7 +49,10 @@ export interface LogMetadata {
   userAgent: string;
   statusCode: number;
   errorCode: string;
+  severity: LogSeverity;
+  additionalInfo?: string;
   stack?: string;
+  neededActions?: string[];
 }
 
 // Apply colors to winston
@@ -83,7 +84,6 @@ class Logger {
   private updateLogger() {
     this.dailyRotateFileTransport = this.createDailyRotateFileTransport();
     this.logger = this.createLogger();
-    console.log(this.logger.level);
   }
 
   // Get logger child instance for a specific level
@@ -118,7 +118,7 @@ class Logger {
   }
 
   private createLogger() {
-    console.log("Creating logger");
+    //console.log("Creating logger");
     return winston.createLogger({
       levels: logConfigs.getConfig().logLevels,
       level: logConfigs.getConfig().logLevel,
@@ -131,7 +131,7 @@ class Logger {
   }
 
   private createDailyRotateFileTransport() {
-    console.log("Creating daily rotate file transport");
+    //console.log("Creating daily rotate file transport");
     return new DailyRotateFile({
       filename: logConfigs.getConfig().logFile || "logs/application-%DATE%.log", // Ensure logs directory exists
       datePattern: logConfigs.getConfig().datePattern || "YYYY-MM-DD",

@@ -1,8 +1,7 @@
 import { Schema, ValidationResult } from "joi";
 import { Request, Response, NextFunction } from "express";
-import { CustomError } from "../lib/error";
-import { authErrorCodes, authErrorCodesMap } from "../lib/errorCodes";
-import logger from "../lib/logger";
+import { authErrorCodes } from "../error/errorCodes";
+import { AppError } from "../error/AppError";
 
 /**
  * Interface for validation parameters.
@@ -34,21 +33,14 @@ const validateSchema =
       // If validation fails, generate a BadRequest error with the error details
       const { details = [] } = error || {};
       const message: string = details.map((i) => i.message).join(",");
-      logger.debug(message, {
-        action: "validateSchema",
-        requestId: req.requestId,
-        userIdentifier: `${user.sub}`,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_REQ_VALIDATION_ERROR,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
-      });
 
       return next(
-        new CustomError(authErrorCodes.AUTH_REQ_VALIDATION_ERROR, message)
+        new AppError(authErrorCodes.AUTH_REQ_VALIDATION_ERROR, message, {
+          logLevel: "warn",
+          errorLogSeverity: "security",
+          where: "verifyVerificationToken",
+          additionalInfo: "schema validation error",
+        })
       );
     } else {
       // If validation succeeds, proceed to the next middleware

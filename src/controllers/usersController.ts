@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction, response } from "express";
-import { CustomError } from "../lib/error";
-import { authErrorCodes, authErrorCodesMap } from "../lib/errorCodes";
+import { authErrorCodes } from "../error/errorCodes";
 import { hashPassword, verifyPassword } from "../lib/auth";
 import { UserSchema } from "../models/users";
 import { IAddress } from "../models/users/types";
@@ -13,6 +12,8 @@ import mongoose from "mongoose";
 import logger from "../lib/logger";
 import { log } from "console";
 import { verifyUsernameChangeSchema } from "../models/users/userRequestVerificationSchemas";
+import { AppError } from "../error/AppError";
+import { UnsecuredJWT } from "jose";
 
 export async function getUserInfo(
   req: Request,
@@ -28,20 +29,13 @@ export async function getUserInfo(
     ).lean();
 
     if (!user) {
-      logger.security("User Not found", {
-        action: "getUserInfo",
-        requestId: req.requestId,
-        userIdentifier: userId,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
+      throw new AppError(authErrorCodes.AUTH_USER_NOT_FOUND, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "getUserInfo",
+        neededActions: ["check for suspecious activity"],
+        additionalInfo: `getUserInfo`,
       });
-
-      throw new CustomError(authErrorCodes.AUTH_USER_NOT_FOUND);
     }
 
     res.json({ ...responseDefault, result: { ...user } });
@@ -63,21 +57,16 @@ export async function changeUserPassword(
     let user = await UserSchema.findOne({ _id: userId });
 
     if (!user) {
-      logger.security("User not found", {
-        action: "changeUserPassword",
-        requestId: req.requestId,
-        userIdentifier: userId,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_USER_NOT_FOUND].status,
-      });
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_USER_NOT_FOUND,
-        "Invalid credentials"
+        "Invalid credentials",
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "changeUserPassword",
+          neededActions: ["check for suspecious activity"],
+          additionalInfo: `User not found`,
+        }
       );
     }
 
@@ -85,22 +74,17 @@ export async function changeUserPassword(
     const isVerified = await verifyPassword(currentPassword, user.password);
 
     if (!isVerified) {
-      logger.security("Password not verified, User password is wrong", {
-        action: "changeUserPassword",
-        requestId: req.requestId,
-        userIdentifier: userId,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
-      });
       //log this
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_INVALID_CREDENTIALS,
-        "The current password is wrong! Please change the password and try again"
+        "The current password is wrong! Please change the password and try again",
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "changeUserPassword",
+          neededActions: ["check for suspecious activity"],
+          additionalInfo: `Password not verified, User password is wrong`,
+        }
       );
     }
 
@@ -134,19 +118,13 @@ export async function changeUserEmail(
     const user = await UserSchema.findOne({ _id: userId });
 
     if (!user) {
-      logger.security("Email cannot be changed! User not found", {
-        action,
-        requestId: req.requestId,
-        userIdentifier: userId,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
+      throw new AppError(authErrorCodes.AUTH_USER_NOT_FOUND, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "changeUserEmail",
+        neededActions: ["check for suspecious activity"],
+        additionalInfo: `Email cannot be changed! User not found`,
       });
-      throw new CustomError(authErrorCodes.AUTH_USER_NOT_FOUND);
     }
 
     await sendVerificationTokenHandler("email", email, req);
@@ -174,19 +152,12 @@ export async function changeUserPhone(
     const user = await UserSchema.findOne({ _id: userId });
 
     if (!user) {
-      logger.security("User Phone number cannot be changed! User not found", {
-        action: "changeUserPhone",
-        requestId: req.requestId,
-        userIdentifier: userId,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
+      throw new AppError(authErrorCodes.AUTH_USER_NOT_FOUND, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "changeUserPhone",
+        additionalInfo: `User Phone number cannot be changed! User not found`,
       });
-      throw new CustomError(authErrorCodes.AUTH_USER_NOT_FOUND);
     }
 
     await sendVerificationTokenHandler("phone", phone, req);
@@ -209,19 +180,12 @@ export async function changeUserName(
     const user = await UserSchema.findOne({ _id: userId });
 
     if (!user) {
-      logger.security("User name cannot be changed! User not found", {
-        action: "changeUserName",
-        requestId: req.requestId,
-        userIdentifier: userId,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
+      throw new AppError(authErrorCodes.AUTH_USER_NOT_FOUND, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "changeUserName",
+        additionalInfo: `User name cannot be changed! User not found`,
       });
-      throw new CustomError(authErrorCodes.AUTH_USER_NOT_FOUND);
     }
 
     if (name.trim()) user.name = name;
@@ -267,19 +231,12 @@ export async function addUserAddress(
 
     // If the user is not found, throw a 404 error
     if (!user) {
-      logger.error("User address cannot be added! User not found", {
-        action: "addUserAddress",
-        requestId: req.requestId,
-        userIdentifier: userId,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_USER_NOT_FOUND].status,
+      throw new AppError(authErrorCodes.AUTH_USER_NOT_FOUND, undefined, {
+        logLevel: "warn",
+        errorLogSeverity: "major",
+        where: "addUserAddress",
+        additionalInfo: `User address cannot be added! User not found`,
       });
-      throw new CustomError(authErrorCodes.AUTH_USER_NOT_FOUND);
     }
 
     // If the user's addresses property is undefined or null, create an empty array for it
@@ -304,21 +261,15 @@ export async function addUserAddress(
 
     // If the updated user object is falsy, throw a 500 error
     if (!updatedUser) {
-      logger.error("An unexecepted error occured why updating user address", {
-        action: "addUserAddress",
-        requestId: req.requestId,
-        userIdentifier: userId,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_INTERNAL_SERVER_ERROR,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_INTERNAL_SERVER_ERROR].status,
-      });
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_INTERNAL_SERVER_ERROR,
-        "An unexecepted error occured why updating user address"
+        "An unexecepted error occured why updating user address",
+        {
+          logLevel: "warn",
+          errorLogSeverity: "major",
+          where: "addUserAddress",
+          additionalInfo: `An unexecepted error occured why updating user address`,
+        }
       );
     }
 
@@ -363,7 +314,7 @@ export async function deleteUserAddress(
 
     // If the modified count is not 1, then the address was not found.
     if (result.modifiedCount !== 1) {
-      throw new CustomError(authErrorCodes.AUTH_ADDRESS_NOT_FOUND);
+      throw new AppError(authErrorCodes.AUTH_ADDRESS_NOT_FOUND, undefined);
     }
 
     // Return a success message to the client.
@@ -394,21 +345,15 @@ export async function updateUserAddress(
     );
 
     if (result.matchedCount !== 1) {
-      logger.warn("Address cannot be updated! User address not found", {
-        action: "updateUserAddress",
-        requestId: req.requestId,
-        userIdentifier: userId,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_ADDRESS_NOT_FOUND].status,
-      });
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
-        "An error occurs while updating addess"
+        "An error occurs while updating addess",
+        {
+          logLevel: "warn",
+          errorLogSeverity: "major",
+          where: "updateUserAddress",
+          additionalInfo: `Address cannot be updated! User address not found`,
+        }
       );
     }
 
@@ -432,21 +377,15 @@ export async function getUserAddresses(
     ).lean();
 
     if (!addresses) {
-      logger.warn("User addresses cannot be retrieved! User not found", {
-        action: "getUserAddresses",
-        requestId: req.requestId,
-        userIdentifier: userId,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_ADDRESS_NOT_FOUND].status,
-      });
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
-        "An error occurs while retreving user address"
+        "An error occurs while retreving user address",
+        {
+          logLevel: "warn",
+          errorLogSeverity: "major",
+          where: "getUserAddresses",
+          additionalInfo: `User addresses cannot be retrieved! User not found`,
+        }
       );
     }
 
@@ -465,44 +404,28 @@ export async function getUserAddress(
   try {
     const { addressId, da: defaultAddress } = req.query;
     if (defaultAddress && addressId) {
-      logger.warn(
+      throw new AppError(
+        authErrorCodes.AUTH_BAD_REQUEST,
         "Invalid query parameters! Both defaultAddress and addressId cannot be used together",
         {
-          action: "getUserAddress",
-          requestId: req.requestId,
-          userIdentifier: req.user.sub,
-          ipAddress: req.forwardedForIp,
-          endpoint: req.path,
-          httpMethod: req.method,
-          userAgent: req.forwardedUserAgent,
-          errorCode: authErrorCodes.AUTH_BAD_REQUEST,
-          statusCode: authErrorCodesMap[authErrorCodes.AUTH_BAD_REQUEST].status,
+          logLevel: "warn",
+          errorLogSeverity: "major",
+          where: "getUserAddress",
+          additionalInfo: `Invalid query parameters! Both defaultAddress and addressId cannot be used together`,
         }
-      );
-      throw new CustomError(
-        authErrorCodes.AUTH_BAD_REQUEST,
-        "Invalid query parameters! Both defaultAddress and addressId cannot be used together"
       );
     }
 
     if (!defaultAddress && !addressId) {
-      logger.warn(
-        "Invalid query parameters! Either defaultAddress or addressId must be used",
-        {
-          action: "getUserAddress",
-          requestId: req.requestId,
-          userIdentifier: req.user.sub,
-          ipAddress: req.forwardedForIp,
-          endpoint: req.path,
-          httpMethod: req.method,
-          userAgent: req.forwardedUserAgent,
-          errorCode: authErrorCodes.AUTH_BAD_REQUEST,
-          statusCode: authErrorCodesMap[authErrorCodes.AUTH_BAD_REQUEST].status,
-        }
-      );
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_BAD_REQUEST,
-        "Invalid query parameters! Either da:defaultAddress or addressId must be used"
+        "Invalid query parameters! Either da:defaultAddress or addressId must be used",
+        {
+          logLevel: "warn",
+          errorLogSeverity: "major",
+          where: "getUserAddress",
+          additionalInfo: `Invalid query parameters! Either defaultAddress or addressId must be used`,
+        }
       );
     }
 
@@ -515,24 +438,15 @@ export async function getUserAddress(
       ).lean();
 
       if (!address) {
-        logger.warn(
-          "User address cannot be retrieved! User address not found",
-          {
-            action: "getUserAddress",
-            requestId: req.requestId,
-            userIdentifier: userId,
-            ipAddress: req.forwardedForIp,
-            endpoint: req.path,
-            httpMethod: req.method,
-            userAgent: req.forwardedUserAgent,
-            errorCode: authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
-            statusCode:
-              authErrorCodesMap[authErrorCodes.AUTH_ADDRESS_NOT_FOUND].status,
-          }
-        );
-        throw new CustomError(
+        throw new AppError(
           authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
-          "An error occurs while retreving user address"
+          "An error occurs while retreving user address",
+          {
+            logLevel: "warn",
+            errorLogSeverity: "major",
+            where: "getUserAddress",
+            additionalInfo: `User address cannot be retrieved! User address not found`,
+          }
         );
       }
 
@@ -550,24 +464,15 @@ export async function getUserAddress(
       ).lean();
 
       if (!address) {
-        logger.warn(
-          "User address cannot be retrieved! User address not found",
-          {
-            action: "getUserAddress",
-            requestId: req.requestId,
-            userIdentifier: userId,
-            ipAddress: req.forwardedForIp,
-            endpoint: req.path,
-            httpMethod: req.method,
-            userAgent: req.forwardedUserAgent,
-            errorCode: authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
-            statusCode:
-              authErrorCodesMap[authErrorCodes.AUTH_ADDRESS_NOT_FOUND].status,
-          }
-        );
-        throw new CustomError(
+        throw new AppError(
           authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
-          "An error occurs while retreving user address"
+          "An error occurs while retreving user address",
+          {
+            logLevel: "warn",
+            errorLogSeverity: "major",
+            where: "getUserAddress",
+            additionalInfo: `User address cannot be retrieved! User address not found`,
+          }
         );
       }
 
@@ -577,23 +482,15 @@ export async function getUserAddress(
         result: { address: address.addresses[0] },
       });
     } else {
-      logger.warn(
-        "Invalid query parameters! Either defaultAddress or addressId must be used",
-        {
-          action: "getUserAddress",
-          requestId: req.requestId,
-          userIdentifier: req.user.sub,
-          ipAddress: req.forwardedForIp,
-          endpoint: req.path,
-          httpMethod: req.method,
-          userAgent: req.forwardedUserAgent,
-          errorCode: authErrorCodes.AUTH_BAD_REQUEST,
-          statusCode: authErrorCodesMap[authErrorCodes.AUTH_BAD_REQUEST].status,
-        }
-      );
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_BAD_REQUEST,
-        "Invalid query parameters! Either da:defaultAddress or addressId must be used"
+        "Invalid query parameters! Either da:defaultAddress or addressId must be used",
+        {
+          logLevel: "warn",
+          errorLogSeverity: "major",
+          where: "getUserAddress",
+          additionalInfo: `Invalid query parameters! Either defaultAddress or addressId must be used`,
+        }
       );
     }
   } catch (error) {
@@ -613,19 +510,12 @@ export async function verifyUserEmail(
     //check if the email already exists
     let user = await UserSchema.findOne({ email });
     if (user) {
-      logger.security("Email cannot be changed! User not found", {
-        action: "verifyUserEmail",
-        requestId: req.requestId,
-        userIdentifier: userId,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_EMAIL_CONFLICT,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_EMAIL_CONFLICT].status,
+      throw new AppError(authErrorCodes.AUTH_EMAIL_CONFLICT, undefined, {
+        logLevel: "warn",
+        errorLogSeverity: "major",
+        where: "verifyUserEmail",
+        additionalInfo: `Email cannot be changed! User not found`,
       });
-      throw new CustomError(authErrorCodes.AUTH_EMAIL_CONFLICT);
     }
 
     await verifyVerificationTokenHandler("email", email, code, req);
@@ -634,22 +524,15 @@ export async function verifyUserEmail(
     user = await UserSchema.findOneAndUpdate({ _id: userId }, { email });
 
     if (!user) {
-      logger.error("Email cannot be changed! User not found", {
-        action: "verifyUserEmail",
-        requestId: req.requestId,
-        userIdentifier: userId,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_USER_NOT_FOUND].status,
-      });
-
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_USER_NOT_FOUND,
-        "Something went wrong while updating user email"
+        "Something went wrong while updating user email",
+        {
+          logLevel: "warn",
+          errorLogSeverity: "major",
+          where: "verifyUserEmail",
+          additionalInfo: "Email cannot be changed! User not found",
+        }
       );
     }
 
@@ -674,19 +557,12 @@ export async function verifyUserPhone(
     //check if the Phone number already exists
     let user = await UserSchema.findOne({ phone });
     if (user) {
-      logger.security("Phone number cannot be changed! User not found", {
-        action: "verifyUserPhone",
-        requestId: req.requestId,
-        userIdentifier: userId,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_PHONE_CONFLICT,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_PHONE_CONFLICT].status,
+      throw new AppError(authErrorCodes.AUTH_PHONE_CONFLICT, undefined, {
+        logLevel: "warn",
+        errorLogSeverity: "major",
+        where: "verifyUserPhone",
+        additionalInfo: "Phone number cannot be changed! User not found",
       });
-      throw new CustomError(authErrorCodes.AUTH_PHONE_CONFLICT);
     }
 
     await verifyVerificationTokenHandler("phone", phone, code, req);
@@ -695,21 +571,15 @@ export async function verifyUserPhone(
     user = await UserSchema.findOneAndUpdate({ _id: userId }, { phone });
 
     if (!user) {
-      logger.error("Phone number cannot be changed! User not found", {
-        action: "verifyUserPhone",
-        requestId: req.requestId,
-        userIdentifier: userId,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_USER_NOT_FOUND].status,
-      });
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_USER_NOT_FOUND,
-        "Something went wrong while updating user phone number"
+        "Something went wrong while updating user phone number",
+        {
+          logLevel: "warn",
+          errorLogSeverity: "major",
+          where: "verifyUserPhone",
+          additionalInfo: "Phone number cannot be changed! User not found",
+        }
       );
     }
 
@@ -736,21 +606,15 @@ export async function setAddressAsDefault(
     });
 
     if (!result) {
-      logger.warn("Address cannot be set as default! User not found", {
-        action: "setAddressAsDefault",
-        requestId: req.requestId,
-        userIdentifier: userId,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_USER_NOT_FOUND].status,
-      });
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
-        "An error occurs while updating addess"
+        "An error occurs while updating addess",
+        {
+          logLevel: "warn",
+          errorLogSeverity: "major",
+          where: "setAddressAsDefault",
+          additionalInfo: "Address cannot be set as default! User not found",
+        }
       );
     }
 

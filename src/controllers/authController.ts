@@ -1,6 +1,6 @@
 import e, { Request, Response, NextFunction } from "express";
-import { CustomError } from "../lib/error";
-import { authErrorCodes, authErrorCodesMap } from "../lib/errorCodes";
+import { AppError } from "../error/AppError";
+import { authErrorCodes } from "../error/errorCodes";
 import { UserSchema } from "../models/users";
 import { refreshsSchema } from "../models/refreshTokens";
 import {
@@ -38,6 +38,7 @@ import { jwt } from "twilio";
 import auth from "../middleware/authorize";
 import logger from "../lib/logger";
 import { log } from "console";
+import mongoose from "mongoose";
 
 //public
 export async function signin(req: Request, res: Response, next: NextFunction) {
@@ -52,43 +53,23 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
 
     // Check if user exists
     if (!user) {
-      logger.security(
-        `Signin attempt failed with  ${type}:${value} not found`,
-        {
-          action,
-          requestId: req.requestId,
-          userIdentifier: `${type}:${value}`,
-          ipAddress: req.forwardedForIp,
-          endpoint: req.path,
-          httpMethod: req.method,
-          userAgent: req.forwardedUserAgent,
-          errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
-          statusCode:
-            authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
-        }
-      );
-      throw new CustomError(authErrorCodes.AUTH_INVALID_CREDENTIALS);
+      throw new AppError(authErrorCodes.AUTH_INVALID_CREDENTIALS, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "signin",
+        additionalInfo: "Signin attempt failed with invalid credentials",
+      });
     }
 
     // Check if password is correct
     const isValid = await verifyPassword(password, user.password);
     if (!isValid) {
-      logger.security(
-        `Signin attempt failed with  ${type}:${value} invalid password`,
-        {
-          action,
-          requestId: req.requestId,
-          userIdentifier: `${type}:${value}`,
-          ipAddress: req.forwardedForIp,
-          endpoint: req.path,
-          httpMethod: req.method,
-          userAgent: req.forwardedUserAgent,
-          errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
-          statusCode:
-            authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
-        }
-      );
-      throw new CustomError(authErrorCodes.AUTH_INVALID_CREDENTIALS);
+      throw new AppError(authErrorCodes.AUTH_INVALID_CREDENTIALS, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "signin",
+        additionalInfo: `Signin attempt failed with  ${type}:${value} invalid password`,
+      });
     }
 
     const roles = ["shopper"];
@@ -145,22 +126,12 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
     });
 
     if (!storedRT) {
-      logger.security(
-        `Signin attempt failed with  ${type}:${value} failed to store refresh token`,
-        {
-          action,
-          requestId: req.requestId,
-          userIdentifier: `${type}:${value}`,
-          ipAddress: req.forwardedForIp,
-          endpoint: req.path,
-          httpMethod: req.method,
-          userAgent: req.forwardedUserAgent,
-          errorCode: authErrorCodes.AUTH_RT_CACHED_FAILED,
-          statusCode:
-            authErrorCodesMap[authErrorCodes.AUTH_RT_CACHED_FAILED].status,
-        }
-      );
-      throw new CustomError(authErrorCodes.AUTH_RT_CACHED_FAILED);
+      throw new AppError(authErrorCodes.AUTH_RT_CACHED_FAILED, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "signin",
+        additionalInfo: `Signin attempt failed with  ${type}:${value} failed to store refresh token`,
+      });
     }
 
     // Return access token and refresh token in the response
@@ -194,6 +165,81 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+//public
+export async function getGuestTokens(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const sub = new mongoose.Types.ObjectId().toHexString();
+    const accessToken = await generateJWTToken<AccessTokenClaims>({
+      audience: "abiemarket",
+      type: "at",
+      claims: {
+        sub: sub + "-guest",
+        roles: ["guest"],
+        name: "guest",
+      },
+      maxAge: authConfigsLoader.getConfig().atMaxAge,
+      secret: jwtSecretsLoader.getConfig().newJwtSecert,
+    });
+
+    const refreshToken = await generateJWTToken<RefreshTokenClaims>({
+      audience: "abiemarket",
+      type: "rt",
+      claims: {
+        sub: sub + "-guest",
+      },
+      maxAge: authConfigsLoader.getConfig().rtMaxAge,
+      secret: jwtSecretsLoader.getConfig().newJwtSecert,
+    });
+
+    const sessionToken = await generateJWTToken<SessionTokenClaims>({
+      audience: "abiemarket",
+      type: "st",
+      claims: {
+        hasStore: false,
+        sub: sub + "-guest",
+        roles: ["guest"],
+        name: "Guest",
+        _sot: "guest",
+        val: "guest",
+      },
+      maxAge: authConfigsLoader.getConfig().stMaxAge,
+      secret: jwtSecretsLoader.getConfig().newJwtSecert,
+    });
+
+    res.status(200).json({
+      ...responseDefault,
+      result: {
+        accessToken: {
+          token: accessToken,
+          expires: fromDate(authConfigsLoader.getConfig().atMaxAge),
+        },
+        refreshToken: {
+          token: refreshToken,
+          expires: fromDate(authConfigsLoader.getConfig().rtMaxAge),
+        },
+
+        session: {
+          token: sessionToken,
+          user: {
+            sub: sub + "-guest",
+            name: `Guest`,
+            _sot: "guest",
+            val: "guest",
+            roles: ["guest"],
+          },
+          expires: fromDate(authConfigsLoader.getConfig().stMaxAge),
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 //private
 export async function renewAccessToken(
   req: Request,
@@ -206,20 +252,17 @@ export async function renewAccessToken(
     const action = "renewAccessToken";
 
     if (!refreshToken) {
-      //TODO: log this
-      logger.security("Renew access token failed with no refresh token", {
-        action,
-        requestId: req.requestId,
-        userIdentifier: "no user",
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_INVALID_REFRESH_TOKEN,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_INVALID_REFRESH_TOKEN].status,
-      });
-      throw new CustomError(authErrorCodes.AUTH_INVALID_REFRESH_TOKEN);
+      throw new AppError(
+        authErrorCodes.AUTH_INVALID_REFRESH_TOKEN,
+        "unauthorized",
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "renewAccessToken",
+          neededActions: ["check the client request"],
+          additionalInfo: "Renew access token failed with no refresh token",
+        }
+      );
     }
 
     // Verify refresh token in the database or session
@@ -232,73 +275,55 @@ export async function renewAccessToken(
     );
 
     if (decodedResult.type === "error") {
-      //TODO: log this as suspicious activity
-      logger.security(`Renew access token failed with invalid refresh token`, {
-        action,
-        requestId: req.requestId,
-        userIdentifier: refreshToken,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_INVALID_REFRESH_TOKEN,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_INVALID_REFRESH_TOKEN].status,
+      throw new AppError(authErrorCodes.AUTH_INVALID_REFRESH_TOKEN, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "renewAccessToken",
+        neededActions: ["check the client request"],
+        additionalInfo: "Renew access token failed with invalid refresh token",
       });
-      throw new CustomError(authErrorCodes.AUTH_INVALID_REFRESH_TOKEN);
     }
 
     if (decodedResult.type === "expired") {
-      logger.security(`Renew access token failed with expired refresh token`, {
-        action,
-        requestId: req.requestId,
-        userIdentifier: refreshToken,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_TOKEN_EXPIRED,
-        statusCode: authErrorCodesMap[authErrorCodes.AUTH_TOKEN_EXPIRED].status,
-      });
-
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_TOKEN_EXPIRED,
-        "refresh token expired"
+        "refresh token expired",
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "renewAccessToken",
+          neededActions: ["check the client request"],
+          additionalInfo:
+            "Renew access token failed with expired refresh token",
+        }
       );
     }
-
-    const cachedRT = await refreshsSchema.findOne({ refreshToken });
+    let cachedRT;
+    let isGuestToken = false;
+    //Do not check the result if the token is a guest token - guest token are not cached to the DB! only regular signin
+    if (decodedResult.payload.sub.includes("-guest")) {
+      isGuestToken = true;
+      cachedRT = { revoked: false } as any;
+    } else {
+      cachedRT = await refreshsSchema.findOneAndDelete({ refreshToken });
+    }
     if (!cachedRT) {
-      //TODO: log this as suspicious activity
-      logger.security(`Renew access token failed with invalid refresh token`, {
-        action,
-        requestId: req.requestId,
-        userIdentifier: refreshToken,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_INVALID_REFRESH_TOKEN,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_INVALID_REFRESH_TOKEN].status,
+      throw new AppError(authErrorCodes.AUTH_INVALID_REFRESH_TOKEN, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "renewAccessToken",
+        neededActions: ["check the client request"],
+        additionalInfo: "Renew access token failed with invalid refresh",
       });
-      throw new CustomError(authErrorCodes.AUTH_INVALID_REFRESH_TOKEN);
     }
     if (cachedRT.revoked) {
-      //TODO: log this
-      logger.security(`Renew access token failed with revoked refresh token`, {
-        action,
-        requestId: req.requestId,
-        userIdentifier: refreshToken,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_INVALID_REFRESH_TOKEN,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_INVALID_REFRESH_TOKEN].status,
+      throw new AppError(authErrorCodes.AUTH_INVALID_REFRESH_TOKEN, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "renewAccessToken",
+        neededActions: ["check the client request"],
+        additionalInfo: "Renew access token failed with revoked refresh token",
       });
-      throw new CustomError(authErrorCodes.AUTH_INVALID_REFRESH_TOKEN);
     }
 
     // Generate new access token
@@ -306,9 +331,9 @@ export async function renewAccessToken(
       audience: "abiemarket",
       type: "at",
       claims: {
-        name: cachedRT.name,
-        sub: cachedRT.userId,
-        roles: cachedRT.roles,
+        name: !isGuestToken ? cachedRT.name : "Guest",
+        sub: !isGuestToken ? cachedRT.userId : `${decodedResult.payload.sub}`,
+        roles: !isGuestToken ? cachedRT.roles : ["guest"],
       },
       maxAge: authConfigsLoader.getConfig().atMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
@@ -337,20 +362,13 @@ export async function signout(req: Request, res: Response, next: NextFunction) {
     //induced change
     // Clear access token and refresh token from database or session
     if (!refreshToken) {
-      //TODO: log this
-      logger.security("Signout attempt failed with no refresh token", {
-        action: "signout",
-        requestId: req.requestId,
-        userIdentifier: "no user",
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_INVALID_REFRESH_TOKEN,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_INVALID_REFRESH_TOKEN].status,
+      throw new AppError(authErrorCodes.AUTH_INVALID_REFRESH_TOKEN, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "signout",
+        neededActions: ["check the client request"],
+        additionalInfo: "Signout attempt failed with no refresh token",
       });
-      throw new CustomError(authErrorCodes.AUTH_INVALID_REFRESH_TOKEN);
     }
 
     // Verify refresh token in the database or session
@@ -363,20 +381,13 @@ export async function signout(req: Request, res: Response, next: NextFunction) {
     );
 
     if (decodedResult.type === "error") {
-      //TODO: log this as suspicious activity
-      logger.security(`Signout attempt failed with invalid refresh token`, {
-        action: "signout",
-        requestId: req.requestId,
-        userIdentifier: refreshToken,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_INVALID_REFRESH_TOKEN,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_INVALID_REFRESH_TOKEN].status,
+      throw new AppError(authErrorCodes.AUTH_INVALID_REFRESH_TOKEN, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "signout",
+        neededActions: ["check the client request"],
+        additionalInfo: "Signout attempt failed with invalid refresh token",
       });
-      throw new CustomError(authErrorCodes.AUTH_INVALID_REFRESH_TOKEN);
     }
 
     let userId = "";
@@ -451,39 +462,21 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
     if (isValueTaken) {
       // If the value (phone or email) is already taken, throw a 422 Unprocessable Entity error
       if (type === "email") {
-        logger.security(
-          `Signup attempt failed with  ${type}:${value} already taken`,
-          {
-            action,
-            requestId: req.requestId,
-            userIdentifier: `${type}:${value}`,
-            ipAddress: req.forwardedForIp,
-            endpoint: req.path,
-            httpMethod: req.method,
-            userAgent: req.forwardedUserAgent,
-            errorCode: authErrorCodes.AUTH_SIGNUP_EMAIL_TAKEN,
-            statusCode:
-              authErrorCodesMap[authErrorCodes.AUTH_SIGNUP_EMAIL_TAKEN].status,
-          }
-        );
-        throw new CustomError(authErrorCodes.AUTH_SIGNUP_EMAIL_TAKEN);
+        throw new AppError(authErrorCodes.AUTH_SIGNUP_EMAIL_TAKEN, undefined, {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "signup",
+          neededActions: ["check the client request"],
+          additionalInfo: `Signup attempt failed with  ${type}:${value} already taken`,
+        });
       } else {
-        logger.security(
-          `Signup attempt failed with  ${type}:${value} already taken`,
-          {
-            action,
-            requestId: req.requestId,
-            userIdentifier: `${type}:${value}`,
-            ipAddress: req.forwardedForIp,
-            endpoint: req.path,
-            httpMethod: req.method,
-            userAgent: req.forwardedUserAgent,
-            errorCode: authErrorCodes.AUTH_SIGNUP_PHONE_TAKEN,
-            statusCode:
-              authErrorCodesMap[authErrorCodes.AUTH_SIGNUP_PHONE_TAKEN].status,
-          }
-        );
-        throw new CustomError(authErrorCodes.AUTH_SIGNUP_PHONE_TAKEN);
+        throw new AppError(authErrorCodes.AUTH_SIGNUP_PHONE_TAKEN, undefined, {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "signup",
+          neededActions: ["check the client request"],
+          additionalInfo: `Signup attempt failed with  ${type}:${value} already taken`,
+        });
       }
     }
 
@@ -624,60 +617,33 @@ export async function sellerSignin(
     let user = await userSchema.findOne({ [type]: value });
 
     if (!user) {
-      logger.security(
-        `Seller signin attempt failed with  ${type}:${value} not found`,
-        {
-          action,
-          requestId: req.requestId,
-          userIdentifier: `${type}:${value}`,
-          ipAddress: req.forwardedForIp,
-          endpoint: req.path,
-          httpMethod: req.method,
-          userAgent: req.forwardedUserAgent,
-          errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
-          statusCode:
-            authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
-        }
-      );
-      throw new CustomError(authErrorCodes.AUTH_INVALID_CREDENTIALS);
+      throw new AppError(authErrorCodes.AUTH_INVALID_CREDENTIALS, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "sellerSignin",
+        neededActions: ["check the client request"],
+        additionalInfo: `Signin attempt failed with  ${type}:${value} not found`,
+      });
     }
     if (!user.roles.includes("seller")) {
-      logger.security(
-        `Seller signin attempt failed with  ${type}:${value} not a seller`,
-        {
-          action,
-          requestId: req.requestId,
-          userIdentifier: `${type}:${value}`,
-          ipAddress: req.forwardedForIp,
-          endpoint: req.path,
-          httpMethod: req.method,
-          userAgent: req.forwardedUserAgent,
-          errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
-          statusCode:
-            authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
-        }
-      );
-      throw new CustomError(authErrorCodes.AUTH_INVALID_CREDENTIALS);
+      throw new AppError(authErrorCodes.AUTH_INVALID_CREDENTIALS, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "sellerSignin",
+        neededActions: ["check the client request"],
+        additionalInfo: `Signin attempt failed with  ${type}:${value} not a seller`,
+      });
     }
 
     const isPasswordValid = await verifyPassword(password, user.password);
     if (!isPasswordValid) {
-      logger.security(
-        `Seller signin attempt failed with  ${type}:${value} invalid password`,
-        {
-          action,
-          requestId: req.requestId,
-          userIdentifier: `${type}:${value}`,
-          ipAddress: req.forwardedForIp,
-          endpoint: req.path,
-          httpMethod: req.method,
-          userAgent: req.forwardedUserAgent,
-          errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
-          statusCode:
-            authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
-        }
-      );
-      throw new CustomError(authErrorCodes.AUTH_INVALID_CREDENTIALS);
+      throw new AppError(authErrorCodes.AUTH_INVALID_CREDENTIALS, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "sellerSignin",
+        neededActions: ["check the client request"],
+        additionalInfo: `Signin attempt failed with  ${type}:${value} invalid password`,
+      });
     }
 
     //get refresh token
@@ -815,23 +781,13 @@ export async function resetPassword(
     const user = await userSchema.findOne({ [type]: value });
 
     if (!user) {
-      logger.security(
-        `Password reset attempt failed with  ${type}:${value} not found`,
-        {
-          action: "resetPassword",
-          requestId: req.requestId,
-          userIdentifier: `${type}:${value}`,
-          ipAddress: req.forwardedForIp,
-          endpoint: req.path,
-          httpMethod: req.method,
-          userAgent: req.forwardedUserAgent,
-          errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
-          statusCode:
-            authErrorCodesMap[authErrorCodes.AUTH_USER_NOT_FOUND].status,
-        }
-      );
-
-      throw new CustomError(authErrorCodes.AUTH_USER_NOT_FOUND);
+      throw new AppError(authErrorCodes.AUTH_USER_NOT_FOUND, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "resetPassword",
+        neededActions: ["check the client request"],
+        additionalInfo: `Password reset attempt failed with  ${type}:${value} not found`,
+      });
     }
 
     await verifyVerificationTokenHandler(type, value, code, req);
@@ -886,64 +842,45 @@ export async function grant(req: any, res: Response, next: NextFunction) {
 
     const user = await userSchema.findOne({ [type]: value });
     if (!user) {
-      //TODO: log this
-      logger.security(`User ${sub} cannot be found`, {
-        action: "grant",
-        requestId: req.requestId,
-        userIdentifier: `${type}:${value}`,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_USER_NOT_FOUND].status,
+      throw new AppError(authErrorCodes.AUTH_USER_GRANT_FAIL, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "grant",
+        neededActions: ["check the client request"],
+        additionalInfo: `User ${sub} cannot be found`,
       });
-      throw new CustomError(authErrorCodes.AUTH_USER_GRANT_FAIL);
     }
 
     const canGrantRole = user.roles.includes(role);
 
     if (!canGrantRole) {
-      //TODO: Log this as an auth error
-      logger.security(`User ${sub} cannot grant ${role} to ${type}:${value}`, {
-        action: "grant",
-        requestId: req.requestId,
-        userIdentifier: `${type}:${value}`,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_UNAUTHORIZE,
-        statusCode: authErrorCodesMap[authErrorCodes.AUTH_UNAUTHORIZE].status,
-      });
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_UNAUTHORIZE,
-        "User cannot be granted this role"
+        "User cannot be granted this role",
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "grant",
+          neededActions: [""],
+          additionalInfo: `User ${sub} cannot grant ${role} to ${type}:${value}`,
+        }
       );
     }
     const isPasswordValid = await verifyPassword(password, user.password);
 
     if (!isPasswordValid) {
       //TODO: Log this as
-      logger.security(
-        `User ${sub} cannot grant ${role} to ${type}:${value} invalid password`,
-        {
-          action: "grant",
-          requestId: req.requestId,
-          userIdentifier: `${type}:${value}`,
-          ipAddress: req.forwardedForIp,
-          endpoint: req.path,
-          httpMethod: req.method,
-          userAgent: req.forwardedUserAgent,
-          errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
-          statusCode:
-            authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
-        }
-      );
-      throw new CustomError(
+
+      throw new AppError(
         authErrorCodes.AUTH_UNAUTHORIZE,
-        "Invalid credentials"
+        "Invalid credentials",
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "grant",
+          neededActions: [""],
+          additionalInfo: `User ${sub} cannot grant ${role} to ${type}:${value} invalid password`,
+        }
       );
     }
 
@@ -1016,20 +953,13 @@ export async function session(req: Request, res: Response, next: NextFunction) {
     );
 
     if (decodedResult.type === "error") {
-      //TODO: log this
-      logger.security(`Invalid session token`, {
-        action,
-        requestId: req.requestId,
-        userIdentifier: sessionToken,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_INVALID_SESSION_TOKEN,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_INVALID_SESSION_TOKEN].status,
+      throw new AppError(authErrorCodes.AUTH_INVALID_SESSION_TOKEN, "", {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "session",
+        neededActions: ["Check for Suspecious Activities"],
+        additionalInfo: `Invalid session token`,
       });
-      throw new CustomError(authErrorCodes.AUTH_INVALID_SESSION_TOKEN);
     }
 
     if (decodedResult.type === "expired") {
@@ -1039,21 +969,16 @@ export async function session(req: Request, res: Response, next: NextFunction) {
         },
         { revoked: true }
       );
-
-      logger.security(`Expired session token`, {
-        action,
-        requestId: req.requestId,
-        userIdentifier: sessionToken,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_TOKEN_EXPIRED,
-        statusCode: authErrorCodesMap[authErrorCodes.AUTH_TOKEN_EXPIRED].status,
-      });
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_TOKEN_EXPIRED,
-        "session token expired"
+        "session token expired",
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "session",
+          neededActions: [""],
+          additionalInfo: `session token expired`,
+        }
       );
     }
 
@@ -1108,35 +1033,22 @@ export async function makeUserSeller(
     const user = await userSchema.findById(userId);
 
     if (!user) {
-      logger.security(`User Not found while granting user seller permission`, {
-        action: "makeUserSeller",
-        requestId: req.requestId,
-        userIdentifier: userId,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_USER_NOT_FOUND].status,
+      throw new AppError(authErrorCodes.AUTH_USER_NOT_FOUND, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "makeUserSeller",
+        neededActions: ["check for suspecious activity"],
+        additionalInfo: `User ${userId} not found while granting seller permission`,
       });
-      throw new CustomError(authErrorCodes.AUTH_USER_NOT_FOUND);
     }
 
     if (user.roles.includes("seller")) {
-      logger.security(`User is already a seller`, {
-        action: "makeUserSeller",
-        requestId: req.requestId,
-        userIdentifier: userId,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_USER_ALREADY_SELLER,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_USER_ALREADY_SELLER].status,
+      throw new AppError(authErrorCodes.AUTH_USER_ALREADY_SELLER, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "makeUserSeller",
+        additionalInfo: `User ${userId} not found while granting seller permission`,
       });
-      throw new CustomError(authErrorCodes.AUTH_USER_ALREADY_SELLER);
     }
 
     user.roles.push("seller");
@@ -1167,27 +1079,30 @@ export async function generateClientToken(
     let platform: Platfrom = p as Platfrom;
 
     if (!verificationToken) {
-      logger.debug(`Client verification token is required`, {
-        action: "generateClientToken",
-        requestId: req.requestId,
-        userIdentifier: "no user",
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_BAD_REQUEST,
-        statusCode: authErrorCodesMap[authErrorCodes.AUTH_BAD_REQUEST].status,
-      });
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_BAD_REQUEST,
-        "client verification token is required"
+        "client verification token is required",
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "generateClientToken",
+          neededActions: ["check for suspecious activity"],
+          additionalInfo: `Client Verification token is required`,
+        }
       );
     }
 
     if (!platform) {
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_BAD_REQUEST,
-        "platform is required"
+        "platform is required",
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "makeUserSeller",
+          neededActions: ["check for suspecious activity"],
+          additionalInfo: `Platform Not provide`,
+        }
       );
     }
 
@@ -1202,17 +1117,47 @@ export async function generateClientToken(
 
     //for now just  mock the response
     if (platform === "web" && verificationToken !== webVerificationToken) {
-      throw new CustomError(authErrorCodes.AUTH_INVALID_VERIFICATION_TOKEN);
+      throw new AppError(
+        authErrorCodes.AUTH_INVALID_VERIFICATION_TOKEN,
+        undefined,
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "generateClienttoken",
+          neededActions: ["check for suspecious activities"],
+          additionalInfo: `Invalid Client Verification Token`,
+        }
+      );
     } else if (
       platform === "android" &&
       verificationToken !== androidVerificationToken
     ) {
-      throw new CustomError(authErrorCodes.AUTH_INVALID_VERIFICATION_TOKEN);
+      throw new AppError(
+        authErrorCodes.AUTH_INVALID_VERIFICATION_TOKEN,
+        undefined,
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "generateClientToken",
+          neededActions: ["check for suspecious activity"],
+          additionalInfo: `Invalid Client Verification Token`,
+        }
+      );
     } else if (
       platform === "ios" &&
       verificationToken !== iosVerificationToken
     ) {
-      throw new CustomError(authErrorCodes.AUTH_INVALID_VERIFICATION_TOKEN);
+      throw new AppError(
+        authErrorCodes.AUTH_INVALID_VERIFICATION_TOKEN,
+        undefined,
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "generateClientToken",
+          neededActions: ["check for suspecious activity"],
+          additionalInfo: `Invalid Client Verification Token`,
+        }
+      );
     }
 
     const clientToken = await generateJWTToken<ClientTokenClaims>({
@@ -1259,20 +1204,16 @@ export async function verifyToken(
     );
 
     if (decodedResult.type === "error") {
-      logger.security(`${decodedResult.error}-tokenType:${tokenType}`, {
-        action: "verifyToken",
-        requestId: req.requestId,
-        userIdentifier: token,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_INVALID_TOKEN,
-        statusCode: authErrorCodesMap[authErrorCodes.AUTH_INVALID_TOKEN].status,
-      });
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_INVALID_TOKEN,
-        `invalid ${tokenType} token`
+        `invalid ${tokenType} token`,
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "verifyToken",
+          neededActions: ["check for suspecious activity"],
+          additionalInfo: `${decodedResult.error}-tokenType:${tokenType}`,
+        }
       );
     }
 
@@ -1288,27 +1229,29 @@ export async function verifyToken(
       //   errorCode: authErrorCodes.AUTH_TOKEN_EXPIRED,
       //   statusCode: authErrorCodesMap[authErrorCodes.AUTH_TOKEN_EXPIRED].status,
       // });
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_TOKEN_EXPIRED,
-        `${tokenType} token expired`
+        `${tokenType} token expired`,
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "verifyToken",
+          additionalInfo: `expired token`,
+        }
       );
     }
 
     if (decodedResult.payload.type !== tokenType) {
-      logger.security(`Invalid ${tokenType} token`, {
-        action: "verifyToken",
-        requestId: req.requestId,
-        userIdentifier: token,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_INVALID_TOKEN,
-        statusCode: authErrorCodesMap[authErrorCodes.AUTH_INVALID_TOKEN].status,
-      });
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_INVALID_TOKEN,
-        `invalid ${tokenType} token`
+        `invalid ${tokenType} token`,
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "verifyToken",
+          neededActions: ["check for suspecious activity"],
+          additionalInfo: `Invalid ${tokenType} token`,
+        }
       );
     }
 
@@ -1344,20 +1287,16 @@ export async function verifyToken(
         platform: payload.platform,
       };
     } else {
-      logger.security(`Invalid ${tokenType} token`, {
-        action: "verifyToken",
-        requestId: req.requestId,
-        userIdentifier: token,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_INVALID_TOKEN,
-        statusCode: authErrorCodesMap[authErrorCodes.AUTH_INVALID_TOKEN].status,
-      });
-      throw new CustomError(
+      throw new AppError(
         authErrorCodes.AUTH_INVALID_TOKEN,
-        `invalid ${tokenType} token`
+        `invalid ${tokenType} token`,
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "verifyToken",
+          neededActions: ["check for suspecious activity"],
+          additionalInfo: `Invalid ${tokenType} token`,
+        }
       );
     }
 

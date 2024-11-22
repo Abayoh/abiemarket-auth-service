@@ -22,9 +22,9 @@ import hkdf from "@panva/hkdf";
 import bcrypt from "bcrypt";
 import { VerificationToken } from "../models/verificationTokens";
 import nodemailer from "nodemailer";
-import { CustomError } from "./error";
+import { AppError } from "../error/AppError";
 import twilio from "twilio";
-import { authErrorCodes } from "./errorCodes";
+import { authErrorCodes } from "../error/errorCodes";
 
 export * from "./types";
 
@@ -269,7 +269,12 @@ export async function sendEmailVerificationCode(
 
     await transporter.sendMail(mailOptions);
   } catch (error) {
-    const err = new CustomError(authErrorCodes.AUTH_VERIF_EMAIL_FAIL);
+    const err = new AppError(authErrorCodes.AUTH_VERIF_EMAIL_FAIL, undefined, {
+      logLevel: "error",
+      errorLogSeverity: "major",
+      where: "sendEmailVerificationCode",
+      neededActions: ["check email configuration"],
+    });
     err.stack = (error as Error).stack;
     throw err;
   }
@@ -291,7 +296,12 @@ export async function sendSmsVerificationCode(
       to: phone,
     });
   } catch (error) {
-    const err = new CustomError(authErrorCodes.AUTH_PHONE_VERI_FAIL);
+    const err = new AppError(authErrorCodes.AUTH_PHONE_VERI_FAIL, undefined, {
+      logLevel: "error",
+      errorLogSeverity: "major",
+      where: "sendSmsVerificationCode",
+      neededActions: ["check twilio configuration"],
+    });
     err.stack = (error as Error).stack;
     throw err;
   }

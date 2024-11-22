@@ -18,6 +18,7 @@ import {
   generateClientToken,
   verifyToken,
   verifyOTP,
+  getGuestTokens,
 } from "../controllers/authController";
 
 const router = Router();
@@ -39,6 +40,7 @@ router
   .post("/make-user-seller", makeUserSeller)
   .post("/generate-client-token", generateClientToken)
   .post("/verify-token", verifyToken)
-  .post("/verify-otp", verifyOTP);
+  .post("/verify-otp", verifyOTP)
+  .get("/guest-tokens", getGuestTokens);
 
 export default router;

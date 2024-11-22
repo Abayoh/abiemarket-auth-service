@@ -1,6 +1,5 @@
 import { Request } from "express";
 import Joi from "joi";
-import { CustomError } from "../../lib/error";
 import { VerificationTokenSchema } from "../../models/verificationTokens";
 import {
   ValidationMessages,
@@ -9,14 +8,14 @@ import {
   sendSmsVerificationCode,
   checkVerificationToken,
 } from "../../lib/auth";
-import { authErrorCodes, authErrorCodesMap } from "../../lib/errorCodes";
+import { authErrorCodes } from "../../error/errorCodes";
 
 import userSchema from "../../models/users/userSchema";
 import { fromDate, now } from "../../utils";
-import { TooManyVerificationRequestError } from "../../lib/error";
 import { authConfigsLoader } from "../../config/configurations";
 import logger from "../../lib/logger";
 import { log } from "console";
+import { AppError } from "../../error/AppError";
 
 export async function sendVerificationTokenHandler(
   type: "email" | "phone",
@@ -30,61 +29,29 @@ export async function sendVerificationTokenHandler(
 
   if (user && !isPasswordReset) {
     if (type === "email") {
-      logger.security(
-        `verification token request failed for email ${value} already exists`,
-        {
-          action,
-          requestId: req.requestId,
-          userIdentifier: `${type}:${value}`,
-          ipAddress: req.ip || "" || "",
-          endpoint: req.path,
-          httpMethod: req.method,
-          userAgent: req.forwardedUserAgent || "",
-          errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
-          statusCode:
-            authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
-        }
-      );
-      throw new CustomError(authErrorCodes.AUTH_SIGNUP_EMAIL_TAKEN);
+      throw new AppError(authErrorCodes.AUTH_SIGNUP_EMAIL_TAKEN, undefined, {
+        logLevel: "warn",
+        errorLogSeverity: "major",
+        where: "sendVerificationTokenHandler",
+        additionalInfo: `verification token request failed for email ${value} already exists`,
+      });
     } else {
-      logger.security(
-        `verification token request failed for phone ${value} already exists`,
-        {
-          action,
-          requestId: req.requestId,
-          userIdentifier: `${type}:${value}`,
-          errorCode: authErrorCodes.AUTH_INVALID_CREDENTIALS,
-          ipAddress: req.ip || "" || "",
-          endpoint: req.path,
-          httpMethod: req.method,
-          userAgent: req.forwardedUserAgent || "",
-          statusCode:
-            authErrorCodesMap[authErrorCodes.AUTH_INVALID_CREDENTIALS].status,
-        }
-      );
-      throw new CustomError(authErrorCodes.AUTH_SIGNUP_PHONE_TAKEN);
+      throw new AppError(authErrorCodes.AUTH_SIGNUP_PHONE_TAKEN, undefined, {
+        logLevel: "warn",
+        errorLogSeverity: "major",
+        where: "sendVerificationTokenHandler",
+        additionalInfo: `verification token request failed for phone ${value} already exists`,
+      });
     }
   }
 
   if (!user && isPasswordReset) {
-    logger.security(
-      `verification token request failed for ${value} user not found on password reset
-      `,
-      {
-        action,
-        requestId: req.requestId,
-        userIdentifier: `${type}:${value}`,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_USER_NOT_FOUND,
-
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_USER_NOT_FOUND].status,
-      }
-    );
-    throw new CustomError(authErrorCodes.AUTH_USER_NOT_FOUND);
+    throw new AppError(authErrorCodes.AUTH_USER_NOT_FOUND, undefined, {
+      logLevel: "warn",
+      errorLogSeverity: "major",
+      where: "sendVerificationTokenHandler",
+      additionalInfo: `verification token request failed for ${value} user not found on password reset`,
+    });
   }
 
   let storedVToken = await VerificationTokenSchema.findOne({
@@ -109,7 +76,7 @@ export async function sendVerificationTokenHandler(
     logger.security(
       `verification token request failed for ${value} max request reached`,
       {
-        action,
+        where: "sendVerificationTokenHandler",
         requestId: req.requestId,
         userIdentifier: `${type}:${value}`,
         ipAddress: req.forwardedForIp,
@@ -117,8 +84,9 @@ export async function sendVerificationTokenHandler(
         httpMethod: req.method,
         userAgent: req.forwardedUserAgent,
         errorCode: authErrorCodes.AUTH_TOO_MANY_VERI_REQ,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_TOO_MANY_VERI_REQ].status,
+        statusCode: 401,
+        service: req.service,
+        severity: "security",
       }
     );
     //Add a cooldown period of 1 hour
@@ -129,9 +97,15 @@ export async function sendVerificationTokenHandler(
       await storedVToken.save();
     }
     const message: ValidationMessages = "max-request-reached";
-    throw new TooManyVerificationRequestError(
+    throw new AppError(
       authErrorCodes.AUTH_TOO_MANY_VERI_REQ,
-      storedVToken.cooldownPeriod
+      "max-request-reached",
+      {
+        logLevel: "warn",
+        errorLogSeverity: "major",
+        where: "sendVerificationTokenHandler",
+        additionalInfo: `max request reached! too many verification messages sent, cool down period`,
+      }
     );
   }
 
@@ -170,22 +144,12 @@ export async function sendVerificationTokenHandler(
         isPasswordReset,
       });
     } catch (error) {
-      logger.error(
-        `verification token request failed for ${value} email verification request could not be sent`,
-        {
-          action,
-          requestId: req.requestId,
-          userIdentifier: `${type}:${value}`,
-          ipAddress: req.forwardedForIp,
-          endpoint: req.path,
-          httpMethod: req.method,
-          userAgent: req.forwardedUserAgent,
-          errorCode: authErrorCodes.AUTH_VERIF_EMAIL_FAIL,
-          statusCode:
-            authErrorCodesMap[authErrorCodes.AUTH_VERIF_EMAIL_FAIL].status,
-        }
-      );
-      throw new CustomError(authErrorCodes.AUTH_VERIF_EMAIL_FAIL);
+      throw new AppError(authErrorCodes.AUTH_VERIF_EMAIL_FAIL, undefined, {
+        logLevel: "warn",
+        errorLogSeverity: "major",
+        where: "sendVerificationTokenHandler",
+        additionalInfo: `verification token request failed for ${value} email verification request could not be sent`,
+      });
     }
     // Send an email to the user with the verification code
   } else {
@@ -211,23 +175,17 @@ export async function verifyVerificationTokenHandler(
 
   if (!verificationToken) {
     //TODO: log this as suspicious activity (type: 'signup', value: email)
-    logger.security(
-      `verification token request failed for ${value} verification token not found`,
+
+    throw new AppError(
+      authErrorCodes.AUTH_VERIFICATION_CODE_INVALID,
+      undefined,
       {
-        action: "signup",
-        requestId: req.requestId,
-        userIdentifier: `${type}:${value}`,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_VERIFICATION_CODE_INVALID,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_VERIFICATION_CODE_INVALID]
-            .status,
+        logLevel: "warn",
+        errorLogSeverity: "major",
+        where: "signup",
+        additionalInfo: `verification token request failed for ${value} verification token not found`,
       }
     );
-    throw new CustomError(authErrorCodes.AUTH_VERIFICATION_CODE_INVALID);
   }
 
   const validation = checkVerificationToken({
@@ -240,64 +198,43 @@ export async function verifyVerificationTokenHandler(
   if (validation === "expired") {
     //Delete the verification token
     await VerificationTokenSchema.deleteOne({ _id: verificationToken._id });
-    logger.security(
-      `verification token request failed for ${value} verification code expired`,
+
+    throw new AppError(
+      authErrorCodes.AUTH_VERIFICATION_CODE_EXPIRED,
+      undefined,
       {
-        action: "signup",
-        requestId: req.requestId,
-        userIdentifier: `${type}:${value}`,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_VERIFICATION_CODE_EXPIRED,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_VERIFICATION_CODE_EXPIRED]
-            .status,
+        logLevel: "warn",
+        errorLogSeverity: "major",
+        where: "signup",
+        additionalInfo: `verification token request failed for ${value} verification code expired`,
       }
     );
-    throw new CustomError(authErrorCodes.AUTH_VERIFICATION_CODE_EXPIRED);
   } else if (validation === "invalid") {
     //TODO: log this as suspicious activity (type: 'signup', value: email)
-    logger.security(
-      `verification token request failed for ${value} verification code invalid`,
-      {
-        action: "signup",
-        requestId: req.requestId,
-        userIdentifier: `${type}:${value}`,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_VERIFICATION_CODE_INVALID,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_VERIFICATION_CODE_INVALID]
-            .status,
-      }
-    );
+
     verificationToken.validationAttempts += 1;
     await verificationToken.save();
 
-    throw new CustomError(authErrorCodes.AUTH_VERIFICATION_CODE_INVALID);
+    throw new AppError(
+      authErrorCodes.AUTH_VERIFICATION_CODE_INVALID,
+      undefined,
+      {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "verifyVerificationTokenHandler",
+        additionalInfo: `verification token request failed for ${value} verification code invalid`,
+      }
+    );
   } else if (validation === "validation-attempts-exceeded") {
     //Delete the verification token
     await VerificationTokenSchema.deleteOne({ _id: verificationToken._id });
-    logger.security(
-      `verification token request failed for ${value} validation attempts exceeded`,
-      {
-        action: "signup",
-        requestId: req.requestId,
-        userIdentifier: `${type}:${value}`,
-        ipAddress: req.forwardedForIp,
-        endpoint: req.path,
-        httpMethod: req.method,
-        userAgent: req.forwardedUserAgent,
-        errorCode: authErrorCodes.AUTH_CODE_MAX_TRIES,
-        statusCode:
-          authErrorCodesMap[authErrorCodes.AUTH_CODE_MAX_TRIES].status,
-      }
-    );
-    throw new CustomError(authErrorCodes.AUTH_CODE_MAX_TRIES);
+
+    throw new AppError(authErrorCodes.AUTH_CODE_MAX_TRIES, undefined, {
+      logLevel: "warn",
+      errorLogSeverity: "major",
+      where: "verifyVerificationToken",
+      additionalInfo: `verification token request failed for ${value} validation attempts exceeded`,
+    });
   }
 }
 
@@ -315,18 +252,11 @@ export function validateRequestBody(schema: Joi.ObjectSchema, body: object) {
   if (error) {
     const { details } = error;
     const message = details.map((i) => i.message).join(",");
-    logger.debug(message, {
-      action: "validateSchema",
-      endpoint: "",
-      httpMethod: "",
-      ipAddress: "",
-      userAgent: "",
-      userIdentifier: "",
-      requestId: "",
-      statusCode:
-        authErrorCodesMap[authErrorCodes.AUTH_REQ_VALIDATION_ERROR].status,
-      errorCode: authErrorCodes.AUTH_REQ_VALIDATION_ERROR,
+
+    throw new AppError(authErrorCodes.AUTH_REQ_VALIDATION_ERROR, message, {
+      logLevel: "debug",
+      errorLogSeverity: "major",
+      where: "validateRequestBody",
     });
-    throw new CustomError(authErrorCodes.AUTH_REQ_VALIDATION_ERROR, message);
   }
 }

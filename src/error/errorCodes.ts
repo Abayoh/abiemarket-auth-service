@@ -43,9 +43,7 @@ export const authErrorCodes = {
   AUTH_INVALID_CLIENT_TOKEN: "AUTH_INVALID_CLIENT_TOKEN",
 };
 
-export const mongooseErrorCodes = {};
-
-export const authErrorCodesMap: ErrorCodeToStatusAndMessageMap = {
+const authErrorCodesMap: ErrorCodeToStatusAndMessageMap = {
   AUTH_INVALID_CREDENTIALS: {
     message: "Please check your credentials and try again",
     status: 401,
@@ -185,3 +183,58 @@ export const authErrorCodesMap: ErrorCodeToStatusAndMessageMap = {
     status: 401,
   },
 };
+
+export const generalErrorCodes = {
+  INTERNAL_ERROR: "INTERNAL_ERROR",
+  NOT_FOUND: "NOT_FOUND",
+  BAD_REQUEST: "BAD_REQUEST",
+};
+const generalErrorCodesMap: ErrorCodeToStatusAndMessageMap = {
+  INTERNAL_ERROR: {
+    message: "Internal server error",
+    status: 500,
+  },
+  NOT_FOUND: {
+    message: "Not found",
+    status: 404,
+  },
+  BAD_REQUEST: {
+    message: "Bad request",
+    status: 400,
+  },
+};
+
+export const mongoDbErrorCode = {
+  DB_VALIDATION_ERROR: "DB_VALIDATION_ERROR",
+  DUPLICATE_KEY_ERROR: "DUPLICATE_KEY_ERROR",
+  DB_CONNECTION_ERROR: "DB_CONNECTION_ERROR",
+  DB_ERROR: "DB_ERROR",
+};
+const dbErrorCodeMap: ErrorCodeToStatusAndMessageMap = {
+  DB_VALIDATION_ERROR: {
+    message: "Database validation error",
+    status: 400,
+  },
+  DUPLICATE_KEY_ERROR: {
+    message: "Duplicate key error",
+    status: 400,
+  },
+  DB_CONNECTION_ERROR: {
+    message: "Database connection error",
+    status: 500,
+  },
+  DB_ERROR: {
+    message: "Database error",
+    status: 500,
+  },
+};
+
+export const mongooseErrorCodes = {};
+
+const appErrorMap = {
+  ...authErrorCodesMap,
+  ...generalErrorCodesMap,
+  ...dbErrorCodeMap,
+} as ErrorCodeToStatusAndMessageMap;
+
+export default appErrorMap;

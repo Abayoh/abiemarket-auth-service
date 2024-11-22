@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import rolesMapPermissions from "../models/permissions";
-import { CustomError } from "../lib/error";
-import { authErrorCodes, authErrorCodesMap } from "../lib/errorCodes";
-import logger from "../lib/logger";
+import { authErrorCodes } from "../error/errorCodes";
+import { AppError } from "../error/AppError";
 
 interface CanParams {
   action: string;
@@ -23,42 +22,21 @@ const can = ({ action, verifyOwner = false }: CanParams) =>
       });
 
       if (!isPermitted) {
-        logger.security(
-          `User ${user.sub} is not authorized to perform ${action}`,
-          {
-            action,
-            requestId: req.requestId,
-            userIdentifier: `${user.sub}`,
-            ipAddress: req.forwardedForIp,
-            endpoint: req.path,
-            httpMethod: req.method,
-            userAgent: req.forwardedUserAgent,
-            errorCode: authErrorCodes.AUTH_UNAUTHORIZE,
-            statusCode:
-              authErrorCodesMap[authErrorCodes.AUTH_UNAUTHORIZE].status,
-          }
-        );
-
-        throw new CustomError(authErrorCodes.AUTH_UNAUTHORIZE);
+        throw new AppError(authErrorCodes.AUTH_UNAUTHORIZE, undefined, {
+          logLevel: "warn",
+          errorLogSeverity: "security",
+          where: "can",
+          additionalInfo: `User ${user.sub} is not authorized to perform ${action}`,
+        });
       }
 
       if (verifyOwner && req.params.userId !== user.sub) {
-        logger.security(
-          `User ${user.sub} is not authorized to perform ${action}`,
-          {
-            action,
-            requestId: req.requestId,
-            userIdentifier: `${user.sub}`,
-            ipAddress: req.forwardedForIp,
-            endpoint: req.path,
-            httpMethod: req.method,
-            userAgent: req.forwardedUserAgent,
-            errorCode: authErrorCodes.AUTH_UNAUTHORIZE,
-            statusCode:
-              authErrorCodesMap[authErrorCodes.AUTH_UNAUTHORIZE].status,
-          }
-        );
-        throw new CustomError(authErrorCodes.AUTH_UNAUTHORIZE);
+        throw new AppError(authErrorCodes.AUTH_UNAUTHORIZE, undefined, {
+          logLevel: "warn",
+          errorLogSeverity: "security",
+          where: "can",
+          additionalInfo: `User ${user.sub} is not authorized to perform ${action}`,
+        });
       }
 
       next();
