@@ -32,7 +32,7 @@ declare global {
 dotenv.config();
 dbConfig();
 const app = express();
-const port = 81;
+const port = 80;
 
 app.use(cors());
 
