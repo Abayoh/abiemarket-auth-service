@@ -5,6 +5,7 @@ FROM node:current-alpine3.18
 WORKDIR /app
 
 # Copy the package.json and package-lock.json files
+COPY force_change.txt ./
 COPY package*.json ./
 
 # Change ownership of the package files
