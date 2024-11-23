@@ -249,7 +249,6 @@ export async function renewAccessToken(
   try {
     // Retrieve refresh token from request body or session
     const refreshToken = req.body.refreshToken;
-    const action = "renewAccessToken";
 
     if (!refreshToken) {
       throw new AppError(

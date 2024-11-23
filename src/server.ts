@@ -4,8 +4,6 @@ import cors from "cors";
 import dbConfig from "./config/dbConfig";
 import { authErrorCodes } from "./error/errorCodes";
 import logger from "./lib/logger";
-import os from "os";
-import ipRangeCheck from "ip-range-check";
 //routes
 import authRoutes from "./routes/authRoutes";
 import usersRoutes from "./routes/usersRoutes";
@@ -32,7 +30,7 @@ declare global {
 dotenv.config();
 dbConfig();
 const app = express();
-const port = 80;
+const port = 81;
 
 app.use(cors());
 
