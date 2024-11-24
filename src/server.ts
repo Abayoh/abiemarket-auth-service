@@ -14,6 +14,7 @@ import { errorHandler } from "./error/errorHandlerMiddleware";
 
 import { AccessTokenClaims } from "./lib/types";
 import { AppError } from "./error/AppError";
+import { authConfigsLoader } from "./config/configurations";
 
 declare global {
   namespace Express {
@@ -30,7 +31,7 @@ declare global {
 dotenv.config();
 dbConfig();
 const app = express();
-const port = 80;
+const port = authConfigsLoader.getConfig().port;
 
 app.use(cors());
 

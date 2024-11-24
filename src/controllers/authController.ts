@@ -256,10 +256,11 @@ export async function renewAccessToken(
         "unauthorized",
         {
           logLevel: "security",
-          errorLogSeverity: "major",
+          errorLogSeverity: "critical",
           where: "renewAccessToken",
           neededActions: ["check the client request"],
-          additionalInfo: "Renew access token failed with no refresh token",
+          additionalInfo:
+            "Renew access token failed with no refresh token provided, This seems like a misused of the API which should be investigated",
         }
       );
     }
@@ -276,10 +277,11 @@ export async function renewAccessToken(
     if (decodedResult.type === "error") {
       throw new AppError(authErrorCodes.AUTH_INVALID_REFRESH_TOKEN, undefined, {
         logLevel: "security",
-        errorLogSeverity: "major",
+        errorLogSeverity: "critical",
         where: "renewAccessToken",
         neededActions: ["check the client request"],
-        additionalInfo: "Renew access token failed with invalid refresh token",
+        additionalInfo:
+          "Renew access token failed with invalid refresh token. This is a security threat and should be investigated",
       });
     }
 
@@ -288,7 +290,7 @@ export async function renewAccessToken(
         authErrorCodes.AUTH_TOKEN_EXPIRED,
         "refresh token expired",
         {
-          logLevel: "security",
+          logLevel: "warn",
           errorLogSeverity: "major",
           where: "renewAccessToken",
           neededActions: ["check the client request"],
@@ -306,22 +308,51 @@ export async function renewAccessToken(
     } else {
       cachedRT = await refreshsSchema.findOneAndDelete({ refreshToken });
     }
+
+    // Check if the refresh token is revoked
     if (!cachedRT) {
       throw new AppError(authErrorCodes.AUTH_INVALID_REFRESH_TOKEN, undefined, {
         logLevel: "security",
-        errorLogSeverity: "major",
+        errorLogSeverity: "critical",
         where: "renewAccessToken",
-        neededActions: ["check the client request"],
-        additionalInfo: "Renew access token failed with invalid refresh",
+        neededActions: ["check for suspicious activity"],
+        additionalInfo:
+          "This refresh token does not exist in the database, seems like an attacker is trying to renew access token with a revoked token",
       });
     }
     if (cachedRT.revoked) {
       throw new AppError(authErrorCodes.AUTH_INVALID_REFRESH_TOKEN, undefined, {
         logLevel: "security",
-        errorLogSeverity: "major",
+        errorLogSeverity: "critical",
         where: "renewAccessToken",
         neededActions: ["check the client request"],
-        additionalInfo: "Renew access token failed with revoked refresh token",
+        additionalInfo:
+          "This refresh token has been revoked and seems like an attacker is trying to renew access token with a revoked token",
+      });
+    }
+
+    //Generate new refreshToken
+    const newRefreshToken = await generateJWTToken<RefreshTokenClaims>({
+      type: "rt",
+      audience: "abiemarket",
+      claims: {
+        sub: !isGuestToken ? cachedRT.userId : `${decodedResult.payload.sub}`,
+      },
+      maxAge: authConfigsLoader.getConfig().rtMaxAge,
+      secret: jwtSecretsLoader.getConfig().newJwtSecert,
+    });
+
+    //store refresh token
+    if (!isGuestToken) {
+      await refreshsSchema.create({
+        refreshToken: newRefreshToken,
+        userId: cachedRT.userId,
+        roles: cachedRT.roles,
+        name: cachedRT.name,
+        _sot: cachedRT._sot,
+        val: cachedRT.val,
+        expires: fromDate(authConfigsLoader.getConfig().rtMaxAge),
+        created: now(),
       });
     }
 
@@ -346,6 +377,10 @@ export async function renewAccessToken(
         accessToken: {
           token: accessToken,
           expires: fromDate(authConfigsLoader.getConfig().atMaxAge),
+        },
+        refreshToken: {
+          token: newRefreshToken,
+          expires: fromDate(authConfigsLoader.getConfig().rtMaxAge),
         },
       },
     });
@@ -1208,10 +1243,10 @@ export async function verifyToken(
         `invalid ${tokenType} token`,
         {
           logLevel: "security",
-          errorLogSeverity: "major",
+          errorLogSeverity: "critical",
           where: "verifyToken",
           neededActions: ["check for suspecious activity"],
-          additionalInfo: `${decodedResult.error}-tokenType:${tokenType}`,
+          additionalInfo: `Invalid access token -${decodedResult.error}-tokenType:${tokenType}. This seems like a security threat and should be investigated`,
         }
       );
     }
@@ -1232,7 +1267,7 @@ export async function verifyToken(
         authErrorCodes.AUTH_TOKEN_EXPIRED,
         `${tokenType} token expired`,
         {
-          logLevel: "security",
+          logLevel: "warn",
           errorLogSeverity: "major",
           where: "verifyToken",
           additionalInfo: `expired token`,
@@ -1249,7 +1284,7 @@ export async function verifyToken(
           errorLogSeverity: "major",
           where: "verifyToken",
           neededActions: ["check for suspecious activity"],
-          additionalInfo: `Invalid ${tokenType} token`,
+          additionalInfo: `Invalid ${tokenType} token. Expected ${tokenType} token but got ${decodedResult.payload.type} token, seems like an attacker is trying to use a different token type`,
         }
       );
     }

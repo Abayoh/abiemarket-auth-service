@@ -4,7 +4,7 @@ import { generalErrorCodes } from "./errorCodes";
 import { Request } from "express";
 
 const errorLogger = (error: any, req: Request) => {
-  console.log("error", error);
+  //console.log("error", error);
   if (error instanceof AppError) {
     const stack = error.errorLogLevel === "error" ? { stack: error.stack } : {};
     logger[error.errorLogLevel](`${error.message}`, {
@@ -18,7 +18,7 @@ const errorLogger = (error: any, req: Request) => {
       severity: "major",
       statusCode: error.status,
       userAgent: req.forwardedUserAgent,
-      userIdentifier: req.user.sub,
+      userIdentifier: req?.user?.sub || "",
       neededActions: error.neededActions,
       ...stack,
     });

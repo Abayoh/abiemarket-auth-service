@@ -21,6 +21,7 @@ export interface AuthConfigs {
   coolDownPeriod: number;
   maxValidationAttempts: number;
   env: "dev" | "prod";
+  port: number;
 }
 
 export interface LogConfigs {
