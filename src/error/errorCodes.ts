@@ -210,6 +210,7 @@ export const mongoDbErrorCode = {
   DB_CONNECTION_ERROR: "DB_CONNECTION_ERROR",
   DB_ERROR: "DB_ERROR",
 };
+
 const dbErrorCodeMap: ErrorCodeToStatusAndMessageMap = {
   DB_VALIDATION_ERROR: {
     message: "Database validation error",
