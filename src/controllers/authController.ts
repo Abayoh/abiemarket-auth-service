@@ -46,7 +46,6 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
     validateRequestBody(signInSchema, req.body);
     // Retrieve username and password from request body
     const { type, password, value } = req.body;
-    const action = "signin";
 
     // Find user in the database by username
     const user = await userSchema.findOne({ [type]: value });

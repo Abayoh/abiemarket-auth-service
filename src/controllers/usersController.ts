@@ -358,7 +358,7 @@ export async function updateUserAddress(
     }
 
     // Return success response
-    res.json({ ...responseDefault });
+    res.json({ ...responseDefault, result: { _id: addressId } });
   } catch (error) {
     next(error);
   }

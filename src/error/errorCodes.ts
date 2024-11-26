@@ -123,7 +123,7 @@ const authErrorCodesMap: ErrorCodeToStatusAndMessageMap = {
   },
   AUTH_ADDRESS_NOT_FOUND: {
     message: "An error occurs while deleting user address",
-    status: 400,
+    status: 404,
   },
   AUTH_PHONE_CONFLICT: {
     message: "User with this phone number already exist",

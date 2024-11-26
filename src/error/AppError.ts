@@ -33,12 +33,13 @@ export class AppError extends Error {
       neededActions?: string[];
       additionalInfo?: any;
     },
-    error?: any // Original error if available
+    error?: any, // Original error if available
+    status?: number
   ) {
     // Get the default message and status from the map or use a generic error
     let statusAndMessage = appErrorMap[code] || {
       message: "This error code does not exist",
-      status: 500,
+      status: status || 500,
     };
 
     // Set the error message: either from `error`, `message`, or the map's default
