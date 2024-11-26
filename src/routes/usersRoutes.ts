@@ -90,13 +90,13 @@ router
     changeUserName
   )
   .patch(
-    "/roles",
+    "/:userId/roles/add",
     auth,
     validateSchema({ schema: addUserRoleSchema }),
     addUserRole
   )
   .patch(
-    "/roles",
+    "/:userId:/roles/remove",
     auth,
     validateSchema({ schema: addUserRoleSchema }),
     removeUserRole

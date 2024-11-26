@@ -676,7 +676,7 @@ export async function addUserRole(
 ) {
   try {
     const { role } = req.body;
-    const userId = req.user.sub;
+    const userId = req.params.userId;
 
     const user = await UserSchema.findOne({ _id: userId });
 
@@ -715,7 +715,7 @@ export async function removeUserRole(
 ) {
   try {
     const { role } = req.body;
-    const userId = req.user.sub;
+    const userId = req.params.userId;
 
     const user = await UserSchema.findOne({ _id: userId });
 
