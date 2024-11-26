@@ -16,6 +16,7 @@ import {
   getUserInfo,
   changeUserName,
   addUserRole,
+  removeUserRole,
 } from "../controllers/usersController";
 import auth from "../middleware/authorize";
 
@@ -93,6 +94,12 @@ router
     auth,
     validateSchema({ schema: addUserRoleSchema }),
     addUserRole
+  )
+  .patch(
+    "/roles",
+    auth,
+    validateSchema({ schema: addUserRoleSchema }),
+    removeUserRole
   );
 
 export default router;
