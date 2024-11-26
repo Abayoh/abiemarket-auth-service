@@ -101,7 +101,7 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
       audience: "abiemarket",
       type: "st",
       claims: {
-        hasStore: user.roles.includes("seller"),
+        hasStore: user.roles.includes("vendor"),
         sub: user._id,
         _sot: type,
         val: value,
@@ -562,7 +562,7 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
       audience: "abiemarket",
       type: "st",
       claims: {
-        hasStore: newUser.roles.includes("seller"),
+        hasStore: newUser.roles.includes("vendor"),
         sub: newUser._id,
         roles,
         _sot: type,
@@ -634,7 +634,7 @@ export function sellerSignup(req: any, res: Response, next: NextFunction) {
 }
 
 //private
-export async function sellerSignin(
+export async function vendorSignin(
   req: any,
   res: Response,
   next: NextFunction
@@ -658,7 +658,7 @@ export async function sellerSignin(
         additionalInfo: `Signin attempt failed with  ${type}:${value} not found`,
       });
     }
-    if (!user.roles.includes("seller")) {
+    if (!user.roles.includes("vendor")) {
       throw new AppError(authErrorCodes.AUTH_INVALID_CREDENTIALS, undefined, {
         logLevel: "security",
         errorLogSeverity: "major",
@@ -721,7 +721,7 @@ export async function sellerSignin(
       audience: "abiemarket",
       type: "st",
       claims: {
-        hasStore: user.roles.includes("seller"),
+        hasStore: user.roles.includes("vendor"),
         sub: user._id,
         roles,
         _sot: type,
@@ -937,7 +937,7 @@ export async function grant(req: any, res: Response, next: NextFunction) {
       audience: "abiemarket",
       type: "st",
       claims: {
-        hasStore: user.roles.includes("seller"),
+        hasStore: user.roles.includes("vendor"),
         sub,
         roles,
         _sot: type,
@@ -1056,7 +1056,7 @@ export async function session(req: Request, res: Response, next: NextFunction) {
 
 //private
 //this route is intended to make a user a seller by adding the seller role to the user
-export async function makeUserSeller(
+export async function makeUserVendor(
   req: Request,
   res: Response,
   next: NextFunction
@@ -1075,16 +1075,16 @@ export async function makeUserSeller(
       });
     }
 
-    if (user.roles.includes("seller")) {
-      throw new AppError(authErrorCodes.AUTH_USER_ALREADY_SELLER, undefined, {
+    if (user.roles.includes("vendor")) {
+      throw new AppError(authErrorCodes.AUTH_USER_ALREADY_VENDOR, undefined, {
         logLevel: "security",
         errorLogSeverity: "major",
-        where: "makeUserSeller",
-        additionalInfo: `User ${userId} not found while granting seller permission`,
+        where: "makeUserVendor",
+        additionalInfo: `User ${userId} not found while granting vendor permission`,
       });
     }
 
-    user.roles.push("seller");
+    user.roles.push("vendor");
 
     await user.save();
 

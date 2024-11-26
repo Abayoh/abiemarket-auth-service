@@ -4,7 +4,7 @@ import mongoose from "mongoose";
  * Defines a union type for user roles.
  * Possible values include 'shopper' and 'seller'.
  */
-export type Roles = "shopper" | "seller";
+export type Roles = "shopper" | "vendor" | "admin" | "shopperAdmin";
 
 /**
  * Defines a union type for address kinds.

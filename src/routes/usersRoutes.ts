@@ -1,5 +1,4 @@
 import { Router } from "express";
-import can from "../middleware/can";
 import validateSchema from "../middleware/validateSchema";
 
 import {
@@ -16,6 +15,7 @@ import {
   setAddressAsDefault,
   getUserInfo,
   changeUserName,
+  addUserRole,
 } from "../controllers/usersController";
 import auth from "../middleware/authorize";
 
@@ -27,6 +27,10 @@ import {
   verifyUserEmailSchema,
   verifyUserPhoneSchema,
 } from "../models/users/userRequestVerificationSchemas";
+import {
+  addUserRoleSchema,
+  changeUserNameSchema,
+} from "../middleware/userValidationRequestSchema";
 
 const router = Router();
 
@@ -78,6 +82,17 @@ router
   )
   .patch("/addresses/:addressId/default", auth, setAddressAsDefault)
   .get("/info", auth, getUserInfo)
-  .patch("/username", auth, changeUserName);
+  .patch(
+    "/username",
+    auth,
+    validateSchema({ schema: changeUserNameSchema }),
+    changeUserName
+  )
+  .patch(
+    "/roles",
+    auth,
+    validateSchema({ schema: addUserRoleSchema }),
+    addUserRole
+  );
 
 export default router;

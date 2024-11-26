@@ -14,6 +14,7 @@ import { log } from "console";
 import { verifyUsernameChangeSchema } from "../models/users/userRequestVerificationSchemas";
 import { AppError } from "../error/AppError";
 import { UnsecuredJWT } from "jose";
+import { create } from "domain";
 
 export async function getUserInfo(
   req: Request,
@@ -638,6 +639,129 @@ export async function setAddressAsDefault(
       ...responseDefault,
       result: { message: "Default address set successfully" },
     });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function createNewUser(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { name, email, password, phone } = req.body;
+
+    const hashedPassword = await hashPassword(password);
+
+    const user = new UserSchema({
+      name,
+      email,
+      password: hashedPassword,
+      phone,
+    });
+
+    await user.save();
+
+    res.status(201).json({ ...responseDefault, result: { ...user } });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function addUserRole(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { role } = req.body;
+    const userId = req.user.sub;
+
+    const user = await UserSchema.findOne({ _id: userId });
+
+    if (!user) {
+      throw new AppError(authErrorCodes.AUTH_USER_NOT_FOUND, undefined, {
+        logLevel: "warn",
+        errorLogSeverity: "major",
+        where: "setUserRole",
+        additionalInfo: `User role cannot be set! User not found`,
+      });
+    }
+
+    if (user.roles.includes(role)) {
+      throw new AppError(authErrorCodes.AUTH_ROLE_CONFLICT, undefined, {
+        logLevel: "warn",
+        errorLogSeverity: "major",
+        where: "setUserRole",
+        additionalInfo: `User role cannot be set! User already has the role`,
+      });
+    }
+
+    user.roles = [...user.roles, role];
+
+    await user.save();
+
+    res.json({ ...responseDefault, result: { role } });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function removeUserRole(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { role } = req.body;
+    const userId = req.user.sub;
+
+    const user = await UserSchema.findOne({ _id: userId });
+
+    if (!user) {
+      throw new AppError(authErrorCodes.AUTH_USER_NOT_FOUND, undefined, {
+        logLevel: "warn",
+        errorLogSeverity: "major",
+        where: "removeUserRole",
+        additionalInfo: `User role cannot be removed! User not found`,
+      });
+    }
+
+    if (!user.roles.includes(role)) {
+      throw new AppError(authErrorCodes.AUTH_ROLE_NOT_FOUND, undefined, {
+        logLevel: "warn",
+        errorLogSeverity: "major",
+        where: "removeUserRole",
+        additionalInfo: `User role cannot be removed! User does not have the role`,
+      });
+    }
+
+    //cannot remove seller role
+    if (role === "seller") {
+      throw new AppError(authErrorCodes.AUTH_UNAUTHORIZE, undefined, {
+        logLevel: "warn",
+        errorLogSeverity: "major",
+        where: "removeUserRole",
+        additionalInfo: `User role cannot be removed! User role is not allowed to be removed`,
+      });
+    }
+
+    //cannot remove last role
+    if (user.roles.length === 1) {
+      throw new AppError(authErrorCodes.AUTH_UNAUTHORIZE, undefined, {
+        logLevel: "warn",
+        errorLogSeverity: "major",
+        where: "removeUserRole",
+        additionalInfo: `User role cannot be removed! Users must have at least one role`,
+      });
+    }
+
+    user.roles = user.roles.filter((r) => r !== role);
+
+    await user.save();
+
+    res.json({ ...responseDefault, result: { role } });
   } catch (error) {
     next(error);
   }

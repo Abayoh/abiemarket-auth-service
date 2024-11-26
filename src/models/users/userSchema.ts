@@ -18,6 +18,7 @@ const addressSchema: Schema = new Schema<IAddress>({
   email: { type: String },
 });
 
+export const userRoles = ["shopper", "shopperAdmin", "admin", "vendor"];
 
 const userSchema: Schema = new Schema({
   name: {

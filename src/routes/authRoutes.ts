@@ -7,14 +7,14 @@ import {
   sendVerificationToken,
   signin,
   signup,
-  sellerSignin,
+  vendorSignin,
   sellerSignup,
   revokeToken,
   signout,
   sendPasswordResetToken,
   grant,
   session,
-  makeUserSeller,
+  makeUserVendor,
   generateClientToken,
   verifyToken,
   verifyOTP,
@@ -26,7 +26,7 @@ const router = Router();
 router
   .post("/signin", signin)
   .post("/signup/verify", signup)
-  .post("/seller/signin", sellerSignin)
+  .post("/seller/signin", vendorSignin)
   .post("/seller/signup", sellerSignup)
   .post("/reset-password", resetPassword)
   .post("/pwd-reset-token/send", sendPasswordResetToken)
@@ -37,7 +37,7 @@ router
   .post("/grant", grant)
   .get("/csrf", getCsrfToken)
   .post("/session", session)
-  .post("/make-user-seller", makeUserSeller)
+  .post("/make-user-seller", makeUserVendor)
   .post("/generate-client-token", generateClientToken)
   .post("/verify-token", verifyToken)
   .post("/verify-otp", verifyOTP)

@@ -37,10 +37,12 @@ export const authErrorCodes = {
   AUTH_DB_ERROR: "AUTH_DB_ERROR",
   AUTH_DB_VALIDATION_ERROR: "AUTH_DB_VALIDATION_ERROR",
   AUTH_UNKNOWN_ERROR: "AUTH_UNKNOWN_ERROR",
-  AUTH_USER_ALREADY_SELLER: "AUTH_USER_ALREADY_SELLER",
+  AUTH_USER_ALREADY_VENDOR: "AUTH_USER_ALREADY_VENDOR",
   AUTH_INVALID_VERIFICATION_TOKEN: "AUTH_INVALID_VERIFICATION_TOKEN",
   AUTH_BAD_REQUEST: "AUTH_BAD_REQUEST",
   AUTH_INVALID_CLIENT_TOKEN: "AUTH_INVALID_CLIENT_TOKEN",
+  AUTH_ROLE_CONFLICT: "AUTH_ROLE_CONFLICT",
+  AUTH_ROLE_NOT_FOUND: "AUTH_ROLE_NOT_FOUND",
 };
 
 const authErrorCodesMap: ErrorCodeToStatusAndMessageMap = {
@@ -162,7 +164,7 @@ const authErrorCodesMap: ErrorCodeToStatusAndMessageMap = {
     message: "something went wrong",
     status: 500,
   },
-  AUTH_USER_ALREADY_SELLER: {
+  AUTH_USER_ALREADY_VENDOR: {
     message: "User is already a seller",
     status: 400,
   },
@@ -181,6 +183,14 @@ const authErrorCodesMap: ErrorCodeToStatusAndMessageMap = {
   AUTH_INVALID_TOKEN: {
     message: "Invalid token",
     status: 401,
+  },
+  AUTH_ROLE_CONFLICT: {
+    message: "User already has this role",
+    status: 400,
+  },
+  AUTH_ROLE_NOT_FOUND: {
+    message: "Role not found",
+    status: 404,
   },
 };
 
