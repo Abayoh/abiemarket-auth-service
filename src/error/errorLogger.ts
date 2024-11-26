@@ -20,6 +20,7 @@ const errorLogger = (error: any, req: Request) => {
       userAgent: req.forwardedUserAgent,
       userIdentifier: req?.user?.sub || "",
       neededActions: error.neededActions,
+      additionalInfo: error.additionalInfo,
       ...stack,
     });
   } else {
@@ -36,6 +37,7 @@ const errorLogger = (error: any, req: Request) => {
       userAgent: req.forwardedUserAgent,
       userIdentifier: req?.user?.sub || "",
       neededActions: ["Check error Stack for more information"],
+      additionalInfo: error.message,
       stack: error.stack,
     });
   }
