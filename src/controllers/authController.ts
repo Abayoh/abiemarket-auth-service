@@ -25,7 +25,7 @@ import {
   verifyVerificationTokenHandler,
   validateRequestBody,
 } from "./helpers";
-import { now } from "../utils";
+import { now, nowInSeconds } from "../utils";
 import refreshTokensSchema from "../models/refreshTokens/refreshTokensSchema";
 import { fromDate } from "../utils";
 import verificationsSchema from "../models/verificationTokens/verificationsSchema";
@@ -71,13 +71,16 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
       });
     }
 
-    const roles = ["shopper"];
+    const sit = nowInSeconds();
+
+    const roles = user.roles;
     // Generate access token
     const accessToken = await generateJWTToken<AccessTokenClaims>({
       ...responseDefault,
       audience: "abiemarket",
       type: "at",
       claims: {
+        sit,
         sub: user._id,
         name: `${user.name}`,
         roles,
@@ -91,6 +94,7 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
       audience: "abiemarket",
       type: "rt",
       claims: {
+        sit,
         sub: user._id,
       },
       maxAge: authConfigsLoader.getConfig().rtMaxAge,
@@ -101,6 +105,7 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
       audience: "abiemarket",
       type: "st",
       claims: {
+        sit,
         hasStore: user.roles.includes("vendor"),
         sub: user._id,
         _sot: type,
@@ -113,16 +118,20 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
     });
 
     // Store refresh token in the database or session
-    const storedRT = await refreshsSchema.create({
-      refreshToken,
-      userId: user._id,
-      name: `${user.name}`,
-      _sot: type,
-      val: value,
-      roles,
-      expires: fromDate(authConfigsLoader.getConfig().rtMaxAge),
-      created: now(),
-    });
+    const storedRT = await refreshsSchema.findOneAndUpdate(
+      { userId: user._id },
+      {
+        refreshToken,
+        userId: user._id,
+        name: `${user.name}`,
+        _sot: type,
+        val: value,
+        roles,
+        expires: fromDate(authConfigsLoader.getConfig().rtMaxAge),
+        created: now(),
+      },
+      { upsert: true }
+    );
 
     if (!storedRT) {
       throw new AppError(authErrorCodes.AUTH_RT_CACHED_FAILED, undefined, {
@@ -172,10 +181,12 @@ export async function getGuestTokens(
 ) {
   try {
     const sub = new mongoose.Types.ObjectId().toHexString();
+    const sit = nowInSeconds();
     const accessToken = await generateJWTToken<AccessTokenClaims>({
       audience: "abiemarket",
       type: "at",
       claims: {
+        sit,
         sub: sub + "-guest",
         roles: ["guest"],
         name: "guest",
@@ -188,6 +199,7 @@ export async function getGuestTokens(
       audience: "abiemarket",
       type: "rt",
       claims: {
+        sit,
         sub: sub + "-guest",
       },
       maxAge: authConfigsLoader.getConfig().rtMaxAge,
@@ -198,6 +210,7 @@ export async function getGuestTokens(
       audience: "abiemarket",
       type: "st",
       claims: {
+        sit,
         hasStore: false,
         sub: sub + "-guest",
         roles: ["guest"],
@@ -335,6 +348,7 @@ export async function renewAccessToken(
       type: "rt",
       audience: "abiemarket",
       claims: {
+        sit: !isGuestToken ? cachedRT.sit : `${decodedResult.payload.sit}`,
         sub: !isGuestToken ? cachedRT.userId : `${decodedResult.payload.sub}`,
       },
       maxAge: authConfigsLoader.getConfig().rtMaxAge,
@@ -360,6 +374,7 @@ export async function renewAccessToken(
       audience: "abiemarket",
       type: "at",
       claims: {
+        sit: !isGuestToken ? cachedRT.sit : `${decodedResult.payload.sit}`,
         name: !isGuestToken ? cachedRT.name : "Guest",
         sub: !isGuestToken ? cachedRT.userId : `${decodedResult.payload.sub}`,
         roles: !isGuestToken ? cachedRT.roles : ["guest"],
@@ -488,7 +503,6 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
   try {
     validateRequestBody(signUpSchema, req.body);
     const { password, name, type, value, code } = req.body;
-    const action = "signup";
 
     // Check if the value (phone number or email) is already taken
     const isValueTaken = await UserSchema.findOne({ [type]: value });
@@ -539,20 +553,21 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
     });
 
     //sign user in
-    const roles = ["shopper"];
+    const roles = newUser.roles;
+    const sit = nowInSeconds();
 
     //generate an access token for the user
     const accessToken = await generateJWTToken<AccessTokenClaims>({
       audience: "abiemarket",
       type: "at",
-      claims: { sub: newUser._id, roles, name: `${name} ` },
+      claims: { sub: newUser._id, roles, name: `${name} `, sit },
       maxAge: authConfigsLoader.getConfig().atMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
     });
     const refreshToken = await generateJWTToken<RefreshTokenClaims>({
       type: "rt",
       audience: "abiemarket",
-      claims: { sub: newUser._id },
+      claims: { sub: newUser._id, sit },
       maxAge: authConfigsLoader.getConfig().rtMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
     });
@@ -562,6 +577,7 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
       audience: "abiemarket",
       type: "st",
       claims: {
+        sit,
         hasStore: newUser.roles.includes("vendor"),
         sub: newUser._id,
         roles,
@@ -682,13 +698,14 @@ export async function vendorSignin(
     //get refresh token
     await refreshsSchema.deleteMany({ userId: user._id });
     // Generate access token
-    const roles = ["shopper", "seller"];
+    const roles = user.roles;
+    const sit = nowInSeconds();
 
     //create refresh token
     const refreshToken = await generateJWTToken<RefreshTokenClaims>({
       audience: "abiemarket",
       type: "rt",
-      claims: { sub: user._id },
+      claims: { sub: user._id, sit },
       maxAge: authConfigsLoader.getConfig().rtMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
     });
@@ -708,6 +725,7 @@ export async function vendorSignin(
       audience: "abiemarket",
       type: "at",
       claims: {
+        sit,
         sub: user._id,
         roles,
         name: `${user.name}`,
@@ -721,6 +739,7 @@ export async function vendorSignin(
       audience: "abiemarket",
       type: "st",
       claims: {
+        sit,
         hasStore: user.roles.includes("vendor"),
         sub: user._id,
         roles,
@@ -892,10 +911,10 @@ export async function grant(req: any, res: Response, next: NextFunction) {
         "User cannot be granted this role",
         {
           logLevel: "security",
-          errorLogSeverity: "major",
+          errorLogSeverity: "critical",
           where: "grant",
-          neededActions: [""],
-          additionalInfo: `User ${sub} cannot grant ${role} to ${type}:${value}`,
+          neededActions: ["Check this request for Suspecious activities"],
+          additionalInfo: `User ${sub} cannot grant ${role} to ${type}:${value} - The Role does not exist on the user`,
         }
       );
     }
@@ -909,7 +928,7 @@ export async function grant(req: any, res: Response, next: NextFunction) {
         "Invalid credentials",
         {
           logLevel: "security",
-          errorLogSeverity: "major",
+          errorLogSeverity: "critical",
           where: "grant",
           neededActions: [""],
           additionalInfo: `User ${sub} cannot grant ${role} to ${type}:${value} invalid password`,
@@ -924,6 +943,8 @@ export async function grant(req: any, res: Response, next: NextFunction) {
       audience: "abiemarket",
       type: "at",
       claims: {
+        //ATTENTION!!! the below line needs to be resolved
+        sit: nowInSeconds(), //this is wrong, the signin Time (sit) should be set from the old refresh token, but there is no way of accessing it from this controller. This needs to be fixed. only signin controller should be setting new signin time (sit)
         sub,
         roles,
         name: `${user.name}`,
@@ -938,6 +959,8 @@ export async function grant(req: any, res: Response, next: NextFunction) {
       type: "st",
       claims: {
         hasStore: user.roles.includes("vendor"),
+        //ATTENTION!!! the below line needs to be attended to
+        sit: nowInSeconds(), //this is wrong, the signin Time (sit) should be set from the old refresh token, but there is no way of accessing it from this controller. This needs to be fixed. only signin controller should be setting new signin time (sit)
         sub,
         roles,
         _sot: type,
@@ -1021,9 +1044,10 @@ export async function session(req: Request, res: Response, next: NextFunction) {
       audience: "abiemarket",
       type: "st",
       claims: {
+        sit: payload.sit,
         hasStore: payload.hasStore,
         sub: payload.sub,
-        roles: ["shopper"],
+        roles: payload.roles,
         _sot: payload._sot,
         val: payload.val,
         name: payload.name,

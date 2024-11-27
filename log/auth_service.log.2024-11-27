@@ -1,0 +1,9 @@
+{"additionalInfo":"This refresh token does not exist in the database, seems like an attacker is trying to renew access token with a revoked token","endpoint":"/v1/auth/renew","errorCode":"AUTH_INVALID_REFRESH_TOKEN","httpMethod":"POST","ipAddress":"::1","level":"security","message":"Invalid refresh token","neededActions":["check for suspicious activity"],"requestId":"aa6c4acc-b7db-4e4d-b78f-5ce7320af74a","service":"Auth Service","severity":"major","statusCode":401,"timestamp":"2024-11-27 06:14:39","userIdentifier":"","where":"renewAccessToken"}
+{"additionalInfo":"The Route is unavailable","endpoint":"/v1/users/64ec716734b8fe7ad8f3ff1d/roles/add","errorCode":"AUTH_ROUTE_NOT_FOUND","httpMethod":"POST","ipAddress":"::1","level":"warn","message":"route not found","neededActions":["check suspecious activities"],"requestId":"3f132a52-d112-4764-96a3-bfd2288d2dcb","service":"Auth Service","severity":"major","statusCode":404,"timestamp":"2024-11-27 06:20:30","userIdentifier":"","where":"routeNotfind"}
+{"level":"info","message":"Server is running on port 81","timestamp":"2024-11-27 06:43:23"}
+{"level":"info","message":"Server is running on port 81","timestamp":"2024-11-27 06:45:05"}
+{"level":"info","message":"Server is running on port 81","timestamp":"2024-11-27 07:05:57"}
+{"level":"info","message":"Server is running on port 81","timestamp":"2024-11-27 08:03:40"}
+{"level":"info","message":"Server is running on port 81","timestamp":"2024-11-27 08:06:12"}
+{"level":"info","message":"Server is running on port 81","timestamp":"2024-11-27 08:08:49"}
+{"level":"info","message":"Server is running on port 81","timestamp":"2024-11-27 08:12:20"}

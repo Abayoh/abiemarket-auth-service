@@ -56,9 +56,10 @@ const userSchema: Schema = new Schema({
     require: [true, "date of birth is require"],
   },
   roles: {
-    type: Array,
+    type: [String],
     require: [true, "roles is require"],
-    default: ["shopper", "shopperAdmin"],
+    enum: userRoles,
+    default: ["shopper"],
   },
   addresses: [addressSchema],
 });

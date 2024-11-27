@@ -49,6 +49,7 @@ export interface TokenParams<
 }
 
 export interface AccessTokenClaims {
+  sit: number;
   sub: string;
   roles: string[];
   name: string;
@@ -56,6 +57,7 @@ export interface AccessTokenClaims {
 
 export interface SessionTokenClaims {
   /** */
+  sit: number;
   hasStore: boolean;
   name: string;
   sub: string;
@@ -66,6 +68,7 @@ export interface SessionTokenClaims {
 
 export interface RefreshTokenClaims {
   /** The subject of the JWT. */
+  sit: number;
   sub: string;
 }
 

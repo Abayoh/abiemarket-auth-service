@@ -1,8 +1,0 @@
-{"level":"info","message":"Server is running on port 81","timestamp":"2024-11-26 15:49:34"}
-{"level":"info","message":"Server is running on port 81","timestamp":"2024-11-26 16:39:52"}
-{"level":"info","message":"Server is running on port 81","timestamp":"2024-11-26 17:01:35"}
-{"level":"info","message":"Server is running on port 81","timestamp":"2024-11-26 17:02:38"}
-{"endpoint":"/v1/users/addresses/66fb858df23551c379666618","errorCode":"AUTH_ADDRESS_NOT_FOUND","httpMethod":"PUT","ipAddress":"::1","level":"warn","message":"An error occurs while updating addess","neededActions":[],"requestId":"46ce7052-45c4-4390-8362-7bc5a260b25d","service":"Auth Service","severity":"major","statusCode":404,"timestamp":"2024-11-26 17:09:27","userIdentifier":"64ec716734b8fe7ad8f3ff1d","where":"updateUserAddress"}
-{"endpoint":"/v1/users/addresses/66fb858df23551c379666618","errorCode":"AUTH_ADDRESS_NOT_FOUND","httpMethod":"PUT","ipAddress":"::1","level":"warn","message":"An error occurs while updating addess","neededActions":[],"requestId":"98863bd4-433c-4732-9e03-d018487d5083","service":"Auth Service","severity":"major","statusCode":404,"timestamp":"2024-11-26 17:17:37","userIdentifier":"64ec716734b8fe7ad8f3ff1d","where":"updateUserAddress"}
-{"level":"info","message":"Server is running on port 81","timestamp":"2024-11-26 17:27:11"}
-{"level":"info","message":"Server is running on port 81","timestamp":"2024-11-26 17:29:04"}
