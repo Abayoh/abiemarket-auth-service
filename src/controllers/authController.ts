@@ -172,7 +172,17 @@ export async function getGuestTokens(
   next: NextFunction
 ) {
   try {
-    const sub = new mongoose.Types.ObjectId().toHexString();
+    const { guestId } = req.body;
+    if (guestId && !mongoose.Types.ObjectId.isValid(guestId)) {
+      throw new AppError(authErrorCodes.AUTH_INVALID_GUEST_ID, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "getGuestTokens",
+        neededActions: ["check the client request"],
+        additionalInfo: `Get guest token failed with invalid guestId`,
+      });
+    }
+    const sub = guestId ? guestId : new mongoose.Types.ObjectId().toHexString();
     const sit = nowInSeconds();
     const accessToken = await generateJWTToken<AccessTokenClaims>({
       audience: "abiemarket",

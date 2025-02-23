@@ -43,6 +43,7 @@ export const authErrorCodes = {
   AUTH_INVALID_CLIENT_TOKEN: "AUTH_INVALID_CLIENT_TOKEN",
   AUTH_ROLE_CONFLICT: "AUTH_ROLE_CONFLICT",
   AUTH_ROLE_NOT_FOUND: "AUTH_ROLE_NOT_FOUND",
+  AUTH_INVALID_GUEST_ID: "AUTH_INVALID_GUEST_ID",
 };
 
 const authErrorCodesMap: ErrorCodeToStatusAndMessageMap = {
@@ -191,6 +192,10 @@ const authErrorCodesMap: ErrorCodeToStatusAndMessageMap = {
   AUTH_ROLE_NOT_FOUND: {
     message: "Role not found",
     status: 404,
+  },
+  AUTH_INVALID_GUEST_ID: {
+    message: "Invalid guest id",
+    status: 400,
   },
 };
 

@@ -41,6 +41,6 @@ router
   .post("/generate-client-token", generateClientToken)
   .post("/verify-token", verifyToken)
   .post("/verify-otp", verifyOTP)
-  .get("/guest-tokens", getGuestTokens);
+  .post("/guest-tokens", getGuestTokens);
 
 export default router;
