@@ -34,10 +34,6 @@ import { signInSchema, signUpSchema } from "../models/users/types";
 import { jwtSecretsLoader, authConfigsLoader } from "../config/configurations";
 
 import {} from "../config/configurations";
-import { jwt } from "twilio";
-import auth from "../middleware/authorize";
-import logger from "../lib/logger";
-import { log } from "console";
 import mongoose from "mongoose";
 
 //public
@@ -101,21 +97,21 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
     });
 
-    const SessionToken = await generateJWTToken<SessionTokenClaims>({
-      audience: "abiemarket",
-      type: "st",
-      claims: {
-        sit,
-        hasStore: user.roles.includes("vendor"),
-        sub: user._id,
-        _sot: type,
-        val: value,
-        roles,
-        name: `${user.name}`,
-      },
-      maxAge: authConfigsLoader.getConfig().stMaxAge,
-      secret: jwtSecretsLoader.getConfig().newJwtSecert,
-    });
+    // const SessionToken = await generateJWTToken<SessionTokenClaims>({
+    //   audience: "abiemarket",
+    //   type: "st",
+    //   claims: {
+    //     sit,
+    //     hasStore: user.roles.includes("vendor"),
+    //     sub: user._id,
+    //     _sot: type,
+    //     val: value,
+    //     roles,
+    //     name: `${user.name}`,
+    //   },
+    //   maxAge: authConfigsLoader.getConfig().stMaxAge,
+    //   secret: jwtSecretsLoader.getConfig().newJwtSecert,
+    // });
 
     // Store refresh token in the database or session
     const storedRT = await refreshsSchema.findOneAndUpdate(
@@ -155,16 +151,12 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
           expires: fromDate(authConfigsLoader.getConfig().rtMaxAge),
         },
 
-        session: {
-          token: SessionToken,
-          user: {
-            sub: user._id,
-            name: `${user.name} `,
-            _sot: type,
-            val: value,
-            roles,
-          },
-          expires: fromDate(authConfigsLoader.getConfig().stMaxAge),
+        user: {
+          sub: user._id,
+          name: `${user.name} `,
+          _sot: type,
+          val: value,
+          roles,
         },
       },
     });
@@ -206,21 +198,21 @@ export async function getGuestTokens(
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
     });
 
-    const sessionToken = await generateJWTToken<SessionTokenClaims>({
-      audience: "abiemarket",
-      type: "st",
-      claims: {
-        sit,
-        hasStore: false,
-        sub: sub + "-guest",
-        roles: ["guest"],
-        name: "Guest",
-        _sot: "guest",
-        val: "guest",
-      },
-      maxAge: authConfigsLoader.getConfig().stMaxAge,
-      secret: jwtSecretsLoader.getConfig().newJwtSecert,
-    });
+    // const sessionToken = await generateJWTToken<SessionTokenClaims>({
+    //   audience: "abiemarket",
+    //   type: "st",
+    //   claims: {
+    //     sit,
+    //     hasStore: false,
+    //     sub: sub + "-guest",
+    //     roles: ["guest"],
+    //     name: "Guest",
+    //     _sot: "guest",
+    //     val: "guest",
+    //   },
+    //   maxAge: authConfigsLoader.getConfig().stMaxAge,
+    //   secret: jwtSecretsLoader.getConfig().newJwtSecert,
+    // });
 
     res.status(200).json({
       ...responseDefault,
@@ -233,18 +225,7 @@ export async function getGuestTokens(
           token: refreshToken,
           expires: fromDate(authConfigsLoader.getConfig().rtMaxAge),
         },
-
-        session: {
-          token: sessionToken,
-          user: {
-            sub: sub + "-guest",
-            name: `Guest`,
-            _sot: "guest",
-            val: "guest",
-            roles: ["guest"],
-          },
-          expires: fromDate(authConfigsLoader.getConfig().stMaxAge),
-        },
+        guestId: sub + "-guest",
       },
     });
   } catch (error) {
@@ -263,18 +244,14 @@ export async function renewAccessToken(
     const refreshToken = req.body.refreshToken;
 
     if (!refreshToken) {
-      throw new AppError(
-        authErrorCodes.AUTH_INVALID_REFRESH_TOKEN,
-        "unauthorized",
-        {
-          logLevel: "security",
-          errorLogSeverity: "critical",
-          where: "renewAccessToken",
-          neededActions: ["check the client request"],
-          additionalInfo:
-            "Renew access token failed with no refresh token provided, This seems like a misused of the API which should be investigated",
-        }
-      );
+      throw new AppError(authErrorCodes.AUTH_UNAUTHORIZED, "unauthorized", {
+        logLevel: "security",
+        errorLogSeverity: "critical",
+        where: "renewAccessToken",
+        neededActions: ["check the client request"],
+        additionalInfo:
+          "Renew access token failed with no refresh token provided, This seems like a misused of the API which should be investigated",
+      });
     }
 
     // Verify refresh token in the database or session
@@ -287,7 +264,7 @@ export async function renewAccessToken(
     );
 
     if (decodedResult.type === "error") {
-      throw new AppError(authErrorCodes.AUTH_INVALID_REFRESH_TOKEN, undefined, {
+      throw new AppError(authErrorCodes.AUTH_UNAUTHORIZED, undefined, {
         logLevel: "security",
         errorLogSeverity: "critical",
         where: "renewAccessToken",
@@ -323,7 +300,7 @@ export async function renewAccessToken(
 
     // Check if the refresh token is revoked
     if (!cachedRT) {
-      throw new AppError(authErrorCodes.AUTH_INVALID_REFRESH_TOKEN, undefined, {
+      throw new AppError(authErrorCodes.AUTH_UNAUTHORIZED, undefined, {
         logLevel: "security",
         errorLogSeverity: "critical",
         where: "renewAccessToken",
@@ -333,7 +310,7 @@ export async function renewAccessToken(
       });
     }
     if (cachedRT.revoked) {
-      throw new AppError(authErrorCodes.AUTH_INVALID_REFRESH_TOKEN, undefined, {
+      throw new AppError(authErrorCodes.AUTH_UNAUTHORIZED, undefined, {
         logLevel: "security",
         errorLogSeverity: "critical",
         where: "renewAccessToken",
@@ -615,16 +592,12 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
           token: refreshToken,
           expires: exp,
         },
-        session: {
-          token: sessionToken,
-          user: {
-            sub: newUser._id,
-            name: `${newUser.name} `,
-            roles: ["shopper"],
-            _sot: type,
-            val: value,
-          },
-          expires: fromDate(authConfigsLoader.getConfig().stMaxAge),
+        user: {
+          sub: newUser._id,
+          name: `${newUser.name} `,
+          roles: ["shopper"],
+          _sot: type,
+          val: value,
         },
       },
     });
@@ -763,16 +736,13 @@ export async function vendorSignin(
           token: storedRT.refreshToken,
           expires: storedRT.expires,
         },
-        session: {
-          token: sessionToken,
-          user: {
-            sub: user._id,
-            name: `${user.name} `,
-            roles,
-            _sot: type,
-            val: value,
-          },
-          expires: fromDate(authConfigsLoader.getConfig().stMaxAge),
+
+        user: {
+          sub: user._id,
+          name: `${user.name} `,
+          roles,
+          _sot: type,
+          val: value,
         },
       },
     });
@@ -907,7 +877,7 @@ export async function grant(req: any, res: Response, next: NextFunction) {
 
     if (!canGrantRole) {
       throw new AppError(
-        authErrorCodes.AUTH_UNAUTHORIZE,
+        authErrorCodes.AUTH_UNAUTHORIZED,
         "User cannot be granted this role",
         {
           logLevel: "security",
@@ -924,7 +894,7 @@ export async function grant(req: any, res: Response, next: NextFunction) {
       //TODO: Log this as
 
       throw new AppError(
-        authErrorCodes.AUTH_UNAUTHORIZE,
+        authErrorCodes.AUTH_INVALID_CREDENTIALS,
         "Invalid credentials",
         {
           logLevel: "security",
@@ -978,16 +948,12 @@ export async function grant(req: any, res: Response, next: NextFunction) {
           token: accessToken,
           expires: fromDate(1200),
         },
-        session: {
-          token: sessionToken,
-          user: {
-            sub,
-            name: `${user.name}`,
-            roles,
-            _sot: type,
-            val: value,
-          },
-          expires: fromDate(authConfigsLoader.getConfig().stMaxAge),
+        user: {
+          sub,
+          name: `${user.name}`,
+          roles,
+          _sot: type,
+          val: value,
         },
       },
     });
