@@ -165,7 +165,7 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-//public
+//public - guest
 export async function getGuestTokens(
   req: Request,
   res: Response,
