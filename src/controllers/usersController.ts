@@ -739,7 +739,7 @@ export async function removeUserRole(
 
     //cannot remove seller role
     if (role === "seller") {
-      throw new AppError(authErrorCodes.AUTH_UNAUTHORIZE, undefined, {
+      throw new AppError(authErrorCodes.AUTH_UNAUTHORIZED, undefined, {
         logLevel: "warn",
         errorLogSeverity: "major",
         where: "removeUserRole",
@@ -749,7 +749,7 @@ export async function removeUserRole(
 
     //cannot remove last role
     if (user.roles.length === 1) {
-      throw new AppError(authErrorCodes.AUTH_UNAUTHORIZE, undefined, {
+      throw new AppError(authErrorCodes.AUTH_UNAUTHORIZED, undefined, {
         logLevel: "warn",
         errorLogSeverity: "major",
         where: "removeUserRole",

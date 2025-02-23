@@ -22,7 +22,7 @@ const can = ({ action, verifyOwner = false }: CanParams) =>
       });
 
       if (!isPermitted) {
-        throw new AppError(authErrorCodes.AUTH_UNAUTHORIZE, undefined, {
+        throw new AppError(authErrorCodes.AUTH_UNAUTHORIZED, undefined, {
           logLevel: "warn",
           errorLogSeverity: "security",
           where: "can",
@@ -31,7 +31,7 @@ const can = ({ action, verifyOwner = false }: CanParams) =>
       }
 
       if (verifyOwner && req.params.userId !== user.sub) {
-        throw new AppError(authErrorCodes.AUTH_UNAUTHORIZE, undefined, {
+        throw new AppError(authErrorCodes.AUTH_UNAUTHORIZED, undefined, {
           logLevel: "warn",
           errorLogSeverity: "security",
           where: "can",

@@ -14,7 +14,7 @@ const auth = async (req: Request, _: Response, next: NextFunction) => {
     const err = e as Error;
 
     return next(
-      new AppError(authErrorCodes.AUTH_UNAUTHORIZE, undefined, {
+      new AppError(authErrorCodes.AUTH_UNAUTHORIZED, undefined, {
         logLevel: "error",
         errorLogSeverity: "security",
         where: "aut",
