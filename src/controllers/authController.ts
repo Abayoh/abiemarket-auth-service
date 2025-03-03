@@ -173,10 +173,11 @@ export async function getGuestTokens(
 ) {
   try {
     let { guestId } = req.body;
+    console.log(guestId);
     if (!guestId) {
       guestId = guestId.split("-")[0];
     }
-
+    console.log(guestId);
     if (guestId && !mongoose.Types.ObjectId.isValid(guestId)) {
       throw new AppError(authErrorCodes.AUTH_INVALID_GUEST_ID, undefined, {
         logLevel: "security",
