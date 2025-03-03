@@ -19,6 +19,7 @@ import {
   verifyToken,
   verifyOTP,
   getGuestTokens,
+  verifyPasswordResetToken,
 } from "../controllers/authController";
 
 const router = Router();
@@ -30,6 +31,7 @@ router
   .post("/seller/signup", sellerSignup)
   .post("/reset-password", resetPassword)
   .post("/pwd-reset-token/send", sendPasswordResetToken)
+  .post("/pwd-reset-token/verify", verifyPasswordResetToken)
   .post("/revoke", revokeToken)
   .post("/renew", renewAccessToken)
   .post("/signout", signout)

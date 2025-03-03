@@ -44,6 +44,7 @@ export const authErrorCodes = {
   AUTH_ROLE_CONFLICT: "AUTH_ROLE_CONFLICT",
   AUTH_ROLE_NOT_FOUND: "AUTH_ROLE_NOT_FOUND",
   AUTH_INVALID_GUEST_ID: "AUTH_INVALID_GUEST_ID",
+  AUTH_INVALID_RESET_TOKEN: "AUTH_INVALID_RESET_TOKEN",
 };
 
 const authErrorCodesMap: ErrorCodeToStatusAndMessageMap = {
@@ -195,6 +196,10 @@ const authErrorCodesMap: ErrorCodeToStatusAndMessageMap = {
   },
   AUTH_INVALID_GUEST_ID: {
     message: "Invalid guest id",
+    status: 400,
+  },
+  AUTH_INVALID_RESET_TOKEN: {
+    message: "Invalid reset token",
     status: 400,
   },
 };

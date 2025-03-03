@@ -810,13 +810,13 @@ export async function sendVerificationToken(
 }
 
 //public
-export async function resetPassword(
+export async function verifyPasswordResetToken(
   req: Request,
   res: Response,
   next: NextFunction
 ) {
   try {
-    const { password, type, value, code } = req.body;
+    const { type, value, code } = req.body;
 
     const user = await userSchema.findOne({ [type]: value });
 
@@ -832,12 +832,21 @@ export async function resetPassword(
 
     await verifyVerificationTokenHandler(type, value, code, req);
 
-    // Hash the password
-    const hashedPassword = await hashPassword(password);
+    //Generate a short reset token
+    const resetToken = await generateJWTToken<AccessTokenClaims>({
+      audience: "abiemarket",
+      type: "at",
+      claims: { sub: user._id, sit: nowInSeconds(), roles: [], name: `` },
+      maxAge: 600,
+      secret: jwtSecretsLoader.getConfig().newJwtSecert,
+    });
 
-    // Update user password in the database
-    user.password = hashedPassword;
-    await user.save();
+    // // Hash the password
+    // const hashedPassword = await hashPassword(password);
+
+    // // Update user password in the database
+    // user.password = hashedPassword;
+    // await user.save();
     // For example, you can use the username and password to update the user password in the database
 
     await verificationsSchema.deleteMany({ verificationType: { type, value } });
@@ -845,13 +854,92 @@ export async function resetPassword(
     // Return success response
     res.json({
       ...responseDefault,
-      message: "password reset successfully",
+
+      result: {
+        resetToken,
+      },
     });
   } catch (error) {
     // If an error occurs at any point in the try block, call the next middleware function with the error
     next(error);
   }
 }
+
+export async function resetPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { password, type, value, resetToken } = req.body;
+
+    const user = await userSchema.findOne({ [type]: value });
+
+    if (!user) {
+      throw new AppError(authErrorCodes.AUTH_USER_NOT_FOUND, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "resetPassword",
+        neededActions: ["check the client request"],
+        additionalInfo: `Password reset attempt failed with  ${type}:${value} not found`,
+      });
+    }
+
+    const decodedResetToken = await verifyJWTToken<AccessToken>(
+      {
+        token: resetToken,
+        secret: jwtSecretsLoader.getConfig().newJwtSecert,
+      },
+      jwtSecretsLoader.getConfig().oldJwtSecert
+    );
+
+    if (decodedResetToken.type === "error") {
+      throw new AppError(authErrorCodes.AUTH_INVALID_RESET_TOKEN, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "resetPassword",
+        neededActions: ["check the client request"],
+        additionalInfo: `Password reset attempt failed with  ${type}:${value} invalid reset token`,
+      });
+    }
+
+    if (decodedResetToken.type === "expired") {
+      throw new AppError(authErrorCodes.AUTH_TOKEN_EXPIRED, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "resetPassword",
+      });
+    }
+
+    const { payload } = decodedResetToken;
+
+    if (payload.sub !== user._id.toString()) {
+      throw new AppError(authErrorCodes.AUTH_INVALID_RESET_TOKEN, undefined, {
+        logLevel: "security",
+        errorLogSeverity: "major",
+        where: "resetPassword",
+        neededActions: ["check the client request"],
+        additionalInfo: `Password reset attempt failed with  ${type}:${value} invalid reset token`,
+      });
+    }
+
+    const hashedPassword = await hashPassword(password);
+
+    user.password = hashedPassword;
+    await user.save();
+
+    // Return success response
+    res.json({
+      ...responseDefault,
+      result: {
+        message: "password reset successfully",
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 //public
 export async function sendPasswordResetToken(
   req: Request,
