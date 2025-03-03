@@ -130,14 +130,16 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
       { upsert: true }
     );
 
-    if (!storedRT) {
-      throw new AppError(authErrorCodes.AUTH_RT_CACHED_FAILED, undefined, {
-        logLevel: "security",
-        errorLogSeverity: "major",
-        where: "signin",
-        additionalInfo: `Signin attempt failed with  ${type}:${value} failed to store refresh token`,
-      });
-    }
+    console.log(storedRT);
+
+    // if (!storedRT) {
+    //   throw new AppError(authErrorCodes.AUTH_RT_CACHED_FAILED, undefined, {
+    //     logLevel: "security",
+    //     errorLogSeverity: "major",
+    //     where: "signin",
+    //     additionalInfo: `Signin attempt failed with  ${type}:${value} failed to store refresh token`,
+    //   });
+    // }
 
     // Return access token and refresh token in the response
     res.status(200).json({
