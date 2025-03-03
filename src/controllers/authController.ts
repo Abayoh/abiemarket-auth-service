@@ -175,7 +175,9 @@ export async function getGuestTokens(
     let { guestId } = req.body;
     console.log(guestId);
     if (!guestId) {
-      guestId = guestId.split("-")[0];
+      const splitGuestId = guestId.split("-");
+      console.log(splitGuestId);
+      guestId = splitGuestId[0];
     }
     console.log(guestId);
     if (guestId && !mongoose.Types.ObjectId.isValid(guestId)) {
