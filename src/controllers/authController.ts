@@ -35,6 +35,7 @@ import { jwtSecretsLoader, authConfigsLoader } from "../config/configurations";
 
 import {} from "../config/configurations";
 import mongoose from "mongoose";
+import logger from "../lib/logger";
 
 //public
 export async function signin(req: Request, res: Response, next: NextFunction) {
@@ -454,6 +455,7 @@ export async function signout(req: Request, res: Response, next: NextFunction) {
     }
 
     await refreshsSchema.deleteOne({ refreshToken });
+    logger.info(`User ${userId} logged out`);
     // For example, if you are using express-session: req.session.accessToken = null; req.session.refreshToken = null;
     res.status(200).json({
       ...responseDefault,
