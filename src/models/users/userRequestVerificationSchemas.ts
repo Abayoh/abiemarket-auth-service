@@ -3,6 +3,7 @@ import Joi from "joi";
 
 export const changeUserEmailSchema = Joi.object({
   email: Joi.string().email().required(),
+  currentPassword: Joi.string().min(8).required(),
 });
 
 export const changeUserPasswordSchema = Joi.object({
@@ -12,6 +13,7 @@ export const changeUserPasswordSchema = Joi.object({
 
 export const changeUserPhoneSchema = Joi.object({
   phone: Joi.string().min(8).required(),
+  currentPassword: Joi.string().min(8).required(),
 });
 
 export const newUserAddressSchema = Joi.object({
@@ -39,4 +41,5 @@ export const verifyUserPhoneSchema = Joi.object({
 
 export const verifyUsernameChangeSchema = Joi.object({
   name: Joi.string().required(),
+  currentPassword: Joi.string().min(8).required(),
 });
