@@ -36,6 +36,7 @@ export const signupSchema = Joi.object({
   type: Joi.string().valid("email", "phone").required(),
   value: Joi.string().required(),
   code: Joi.string().required(),
+  clientId: Joi.string().required(),
 });
 
 // Schema for vendorSignin endpoint
@@ -43,6 +44,7 @@ export const vendorSigninSchema = Joi.object({
   type: Joi.string().valid("email", "phone").required(),
   value: Joi.string().required(),
   password: Joi.string().required(),
+  clientId: Joi.string().required(),
 });
 
 // Schema for sendVerificationToken endpoint
