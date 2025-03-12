@@ -47,9 +47,9 @@ export async function generateJWTToken<
     | SessionTokenClaims
     | ClientTokenClaims
 >(params: TokenParams<T>) {
-  const { claims, secret, maxAge, type } = params;
+  const { claims, secret, maxAge, type, ver = 1 } = params;
   const encryptionSecret = await getDerivedEncryptionKey(secret);
-  return await new EncryptJWT({ ...claims, type })
+  return await new EncryptJWT({ ...claims, type, ver })
     .setProtectedHeader({ alg: "dir", enc: "A256GCM" })
     .setIssuedAt(nowInSeconds())
     .setIssuer("beak8.com")

@@ -15,6 +15,7 @@ import { verifyUsernameChangeSchema } from "../models/users/userRequestVerificat
 import { AppError } from "../error/AppError";
 import { UnsecuredJWT } from "jose";
 import { create } from "domain";
+import { refreshsSchema } from "../models/refreshTokens";
 
 export async function getUserInfo(
   req: Request,
@@ -96,10 +97,27 @@ export async function changeUserPassword(
 
     await user.save();
 
+    // Delete all refresh tokens for this user to force them to log in again
+    try {
+      // Following the same approach as in signout function
+      // Delete all refresh tokens associated with this user from the database
+      await refreshsSchema.deleteMany({ userId: userId });
+
+      logger.info(
+        `Deleted all refresh tokens for user ${userId} after password change`
+      );
+    } catch (tokenError) {
+      const errorMessage =
+        tokenError instanceof Error ? tokenError.message : "Unknown error";
+      logger.error(`Failed to delete refresh tokens: ${errorMessage}`);
+      // Continue with the password change even if token deletion fails
+    }
+
     res.status(200).json({
       ...responseDefault,
-      result: {},
-      message: "User Password successfully changed",
+      result: {
+        message: "User Password successfully changed. Please login again",
+      },
     });
   } catch (error) {
     next(error);
@@ -113,7 +131,7 @@ export async function changeUserEmail(
 ) {
   try {
     const userId = req.user.sub;
-    const { email } = req.body;
+    const { email, currentPassword } = req.body;
     const action = "changeUserEmail";
     //check if the user already exists
     const user = await UserSchema.findOne({ _id: userId });
@@ -128,12 +146,30 @@ export async function changeUserEmail(
       });
     }
 
+    // Verify user password
+    const isVerified = await verifyPassword(currentPassword, user.password);
+
+    if (!isVerified) {
+      throw new AppError(
+        authErrorCodes.AUTH_INVALID_CREDENTIALS,
+        "The current password is wrong! Please enter the correct password and try again",
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "changeUserEmail",
+          neededActions: ["check for suspecious activity"],
+          additionalInfo: `Password not verified, User password is wrong`,
+        }
+      );
+    }
+
     await sendVerificationTokenHandler("email", email, req);
 
     res.status(200).json({
       ...responseDefault,
-      result: {},
-      message: "Email verification token sent successfully",
+      result: {
+        message: "Email verification token sent successfully",
+      },
     });
   } catch (error) {
     next(error);
@@ -147,7 +183,7 @@ export async function changeUserPhone(
 ) {
   try {
     const userId = req.user.sub;
-    const { phone } = req.body;
+    const { phone, currentPassword } = req.body;
 
     //check if the user already exists
     const user = await UserSchema.findOne({ _id: userId });
@@ -159,6 +195,23 @@ export async function changeUserPhone(
         where: "changeUserPhone",
         additionalInfo: `User Phone number cannot be changed! User not found`,
       });
+    }
+
+    // Verify user password
+    const isVerified = await verifyPassword(currentPassword, user.password);
+
+    if (!isVerified) {
+      throw new AppError(
+        authErrorCodes.AUTH_INVALID_CREDENTIALS,
+        "The current password is wrong! Please enter the correct password and try again",
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "changeUserPhone",
+          neededActions: ["check for suspecious activity"],
+          additionalInfo: `Password not verified, User password is wrong`,
+        }
+      );
     }
 
     await sendVerificationTokenHandler("phone", phone, req);
@@ -175,7 +228,7 @@ export async function changeUserName(
 ) {
   try {
     const userId = req.user.sub;
-    const { name } = req.body;
+    const { name, currentPassword } = req.body;
     verifyUsernameChangeSchema.validateAsync({ name });
     //check if the user already exists
     const user = await UserSchema.findOne({ _id: userId });
@@ -189,14 +242,44 @@ export async function changeUserName(
       });
     }
 
+    // Verify user password
+    const isVerified = await verifyPassword(currentPassword, user.password);
+
+    if (!isVerified) {
+      throw new AppError(
+        authErrorCodes.AUTH_INVALID_CREDENTIALS,
+        "The current password is wrong! Please enter the correct password and try again",
+        {
+          logLevel: "security",
+          errorLogSeverity: "major",
+          where: "changeUserName",
+          neededActions: ["check for suspecious activity"],
+          additionalInfo: `Password not verified, User password is wrong`,
+        }
+      );
+    }
+
     if (name.trim()) user.name = name;
 
     await user.save();
 
+    //get the refresh tokens and update the name
+    const cashedRT = await refreshsSchema.findOne({ userId });
+    if (cashedRT) {
+      //@ts-ignore
+      cashedRT.name = name;
+      await cashedRT.save();
+    }
+
     res.json({
       ...responseDefault,
-      result: {},
-      message: "User name successfully changed",
+      result: {
+        user: {
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+        },
+      },
     });
   } catch (error) {
     next(error);
@@ -524,6 +607,14 @@ export async function verifyUserEmail(
     //change user email
     user = await UserSchema.findOneAndUpdate({ _id: userId }, { email });
 
+    //get the refresh tokens and update the email it the sot is an email
+    const cashedRT = await refreshsSchema.findOne({ userId });
+    if (cashedRT && cashedRT._sot === "email") {
+      //@ts-ignore
+      cashedRT.email = email;
+      await cashedRT.save();
+    }
+
     if (!user) {
       throw new AppError(
         authErrorCodes.AUTH_USER_NOT_FOUND,
@@ -541,7 +632,16 @@ export async function verifyUserEmail(
     //TODO: Sign in the user
 
     // Return success response
-    res.json({ ...responseDefault });
+    res.json({
+      ...responseDefault,
+      result: {
+        user: {
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+        },
+      },
+    });
   } catch (error) {
     next(error);
   }
@@ -571,6 +671,14 @@ export async function verifyUserPhone(
     //change user Phone number
     user = await UserSchema.findOneAndUpdate({ _id: userId }, { phone });
 
+    //get the refresh tokens and update the phone number it the sot is an phone
+    const cashedRT = await refreshsSchema.findOne({ userId });
+    if (cashedRT && cashedRT._sot === "phone") {
+      //@ts-ignore
+      cashedRT.phone = phone;
+      await cashedRT.save();
+    }
+
     if (!user) {
       throw new AppError(
         authErrorCodes.AUTH_USER_NOT_FOUND,
@@ -587,7 +695,16 @@ export async function verifyUserPhone(
     //TODO: send sms to the user to notify them that their Phone number has been changed
     //TODO: Sign in the user
     // Return success response
-    res.json({ ...responseDefault, message: "phone number changed" });
+    res.json({
+      ...responseDefault,
+      result: {
+        user: {
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+        },
+      },
+    });
   } catch (error) {
     next(error);
   }

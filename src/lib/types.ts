@@ -46,6 +46,9 @@ export interface TokenParams<
    * Token type
    */
   type: TokenTypes;
+
+  /** The version of the token */
+  ver: number;
 }
 
 export interface AccessTokenClaims {
@@ -89,6 +92,8 @@ export interface Token {
   exp: number;
   /** The type of token at, rt, st, ct */
   type: TokenTypes;
+  /** The version of the token */
+  ver: number;
 }
 
 export interface RefreshToken extends Token, RefreshTokenClaims {}

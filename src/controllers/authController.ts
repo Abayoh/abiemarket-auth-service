@@ -42,7 +42,7 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
   try {
     validateRequestBody(signInSchema, req.body);
     // Retrieve username and password from request body
-    const { type, password, value } = req.body;
+    const { type, password, value, clientId } = req.body;
 
     // Find user in the database by username
     const user = await userSchema.findOne({ [type]: value });
@@ -84,6 +84,7 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
       },
       maxAge: authConfigsLoader.getConfig().atMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
+      ver: user.__v,
     });
 
     // Generate refresh token
@@ -96,6 +97,7 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
       },
       maxAge: authConfigsLoader.getConfig().rtMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
+      ver: user.__v,
     });
 
     // const SessionToken = await generateJWTToken<SessionTokenClaims>({
@@ -116,7 +118,10 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
 
     // Store refresh token in the database or session
     const storedRT = await refreshsSchema.findOneAndUpdate(
-      { userId: user._id },
+      {
+        userId: user._id,
+        clientId,
+      },
       {
         refreshToken,
         userId: user._id,
@@ -126,11 +131,13 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
         roles,
         expires: fromDate(authConfigsLoader.getConfig().rtMaxAge),
         created: now(),
+        ver: user.__v,
+        clientId,
+        sit: nowInSeconds(),
+        userAgent: req.forwardedUserAgent,
       },
-      { upsert: true }
+      { upsert: true, sort: { created: -1 } }
     );
-
-    console.log(storedRT);
 
     // if (!storedRT) {
     //   throw new AppError(authErrorCodes.AUTH_RT_CACHED_FAILED, undefined, {
@@ -179,7 +186,7 @@ export async function getGuestTokens(
     if (guestId) {
       guestId = guestId.split("-")[0];
     }
-    console.log(guestId);
+
     if (guestId && !mongoose.Types.ObjectId.isValid(guestId)) {
       throw new AppError(authErrorCodes.AUTH_INVALID_GUEST_ID, undefined, {
         logLevel: "security",
@@ -202,6 +209,7 @@ export async function getGuestTokens(
       },
       maxAge: authConfigsLoader.getConfig().atMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
+      ver: 1,
     });
 
     const refreshToken = await generateJWTToken<RefreshTokenClaims>({
@@ -213,6 +221,7 @@ export async function getGuestTokens(
       },
       maxAge: authConfigsLoader.getConfig().rtMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
+      ver: 1,
     });
 
     // const sessionToken = await generateJWTToken<SessionTokenClaims>({
@@ -259,6 +268,7 @@ export async function renewAccessToken(
   try {
     // Retrieve refresh token from request body or session
     const refreshToken = req.body.refreshToken;
+    const clientId = req.body.clientId;
 
     if (!refreshToken) {
       throw new AppError(authErrorCodes.AUTH_UNAUTHORIZED, "unauthorized", {
@@ -312,7 +322,9 @@ export async function renewAccessToken(
       isGuestToken = true;
       cachedRT = { revoked: false } as any;
     } else {
-      cachedRT = await refreshsSchema.findOneAndDelete({ refreshToken });
+      cachedRT = await refreshsSchema.findOneAndDelete({
+        refreshToken,
+      });
     }
 
     // Check if the refresh token is revoked
@@ -347,7 +359,10 @@ export async function renewAccessToken(
       },
       maxAge: authConfigsLoader.getConfig().rtMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
+      ver: decodedResult.payload.ver,
     });
+
+    const clientProfileUpdated = decodedResult.payload.ver !== cachedRT.ver;
 
     //store refresh token
     if (!isGuestToken) {
@@ -360,6 +375,10 @@ export async function renewAccessToken(
         val: cachedRT.val,
         expires: fromDate(authConfigsLoader.getConfig().rtMaxAge),
         created: now(),
+        ver: cachedRT.ver,
+        clientId,
+        sit: cachedRT.sit,
+        userAgent: cachedRT.userAgent,
       });
     }
 
@@ -375,6 +394,7 @@ export async function renewAccessToken(
       },
       maxAge: authConfigsLoader.getConfig().atMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
+      ver: decodedResult.payload.ver,
     });
 
     // Return new access token in the response
@@ -390,6 +410,17 @@ export async function renewAccessToken(
           token: newRefreshToken,
           expires: fromDate(authConfigsLoader.getConfig().rtMaxAge),
         },
+        ...(clientProfileUpdated ///return the user profile if it has been updated
+          ? {
+              user: {
+                sub: cachedRT.userId,
+                name: cachedRT.name,
+                _sot: cachedRT._sot,
+                val: cachedRT.val,
+                roles: cachedRT.roles,
+              },
+            }
+          : {}),
       },
     });
   } catch (error) {
@@ -558,6 +589,7 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
       claims: { sub: newUser._id, roles, name: `${name} `, sit },
       maxAge: authConfigsLoader.getConfig().atMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
+      ver: newUser.__v,
     });
     const refreshToken = await generateJWTToken<RefreshTokenClaims>({
       type: "rt",
@@ -565,6 +597,7 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
       claims: { sub: newUser._id, sit },
       maxAge: authConfigsLoader.getConfig().rtMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
+      ver: newUser.__v,
     });
 
     //generate session token
@@ -582,6 +615,7 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
       },
       maxAge: authConfigsLoader.getConfig().stMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
+      ver: newUser.__v,
     });
 
     const exp = fromDate(authConfigsLoader.getConfig().rtMaxAge);
@@ -699,6 +733,7 @@ export async function vendorSignin(
       claims: { sub: user._id, sit },
       maxAge: authConfigsLoader.getConfig().rtMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
+      ver: user.__v,
     });
 
     const storedRT = await refreshsSchema.create({
@@ -723,6 +758,7 @@ export async function vendorSignin(
       },
       maxAge: authConfigsLoader.getConfig().atMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
+      ver: user.__v,
     });
 
     //generate session token
@@ -740,6 +776,7 @@ export async function vendorSignin(
       },
       maxAge: authConfigsLoader.getConfig().stMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
+      ver: user.__v,
     });
 
     // Return access token in the response
@@ -839,6 +876,7 @@ export async function verifyPasswordResetToken(
       claims: { sub: user._id, sit: nowInSeconds(), roles: [], name: `` },
       maxAge: 600,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
+      ver: user.__v,
     });
 
     // // Hash the password
@@ -1027,6 +1065,7 @@ export async function grant(req: any, res: Response, next: NextFunction) {
       },
       maxAge: 1200,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
+      ver: user.__v,
     });
 
     //generate session token
@@ -1045,6 +1084,7 @@ export async function grant(req: any, res: Response, next: NextFunction) {
       },
       maxAge: authConfigsLoader.getConfig().stMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
+      ver: user.__v,
     });
 
     res.status(201).json({
@@ -1126,6 +1166,7 @@ export async function session(req: Request, res: Response, next: NextFunction) {
       },
       maxAge: authConfigsLoader.getConfig().stMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
+      ver: payload.ver || 1,
     });
 
     res.json({
@@ -1297,6 +1338,7 @@ export async function generateClientToken(
       },
       maxAge: authConfigsLoader.getConfig().ctMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
+      ver: 1,
     });
 
     res.json({
