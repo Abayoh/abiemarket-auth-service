@@ -229,7 +229,6 @@ export async function changeUserName(
   try {
     const userId = req.user.sub;
     const { name, currentPassword } = req.body;
-    verifyUsernameChangeSchema.validateAsync({ name });
     //check if the user already exists
     const user = await UserSchema.findOne({ _id: userId });
 
