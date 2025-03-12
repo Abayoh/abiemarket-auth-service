@@ -5,6 +5,7 @@ export const signinSchema = Joi.object({
   type: Joi.string().valid("email", "phone").required(),
   value: Joi.string().required(),
   password: Joi.string().required(),
+  clientId: Joi.string().required(),
 });
 
 // Schema for getGuestTokens endpoint

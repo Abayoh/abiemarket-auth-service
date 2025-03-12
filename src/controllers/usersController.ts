@@ -263,7 +263,7 @@ export async function changeUserName(
     const updatedUser = await user.save();
 
     //get the refresh tokens and update the name
-    const cashedRT = await refreshsSchema.findOne({ userId });
+    const cashedRT = await refreshsSchema.findOneAndUpdate({ userId });
     if (cashedRT) {
       //@ts-ignore
       cashedRT.name = name;

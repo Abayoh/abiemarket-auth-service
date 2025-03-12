@@ -116,6 +116,8 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
     //   secret: jwtSecretsLoader.getConfig().newJwtSecert,
     // });
 
+    console.log(req.forwardedUserAgent);
+    console.log(clientId);
     // Store refresh token in the database or session
     const storedRT = await refreshsSchema.findOneAndUpdate(
       {
