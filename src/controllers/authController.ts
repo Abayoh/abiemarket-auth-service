@@ -135,7 +135,7 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
         ver: user.__v,
         clientId,
         sit: nowInSeconds(),
-        userAgent: req.forwardedUserAgent,
+        userAgent: req.forwardedUserAgent || "default",
       },
       { upsert: true, sort: { created: -1 } }
     );
