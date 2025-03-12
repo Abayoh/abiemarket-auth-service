@@ -94,6 +94,7 @@ export async function changeUserPassword(
     const hashedPassword = await hashPassword(newPassword);
 
     user.password = hashedPassword;
+    user.increment();
 
     await user.save();
 
@@ -259,11 +260,12 @@ export async function changeUserName(
     }
 
     if (name.trim()) user.name = name;
+    user.increment();
 
     const updatedUser = await user.save();
 
     //get the refresh tokens and update the name
-    const cashedRT = await refreshsSchema.findOneAndUpdate({ userId });
+    const cashedRT = await refreshsSchema.findOne({ userId });
     if (cashedRT) {
       //@ts-ignore
       cashedRT.name = name;
@@ -339,6 +341,7 @@ export async function addUserAddress(
 
     // Add the new address to the user's list of addresses
     user.addresses.push(newAddress);
+    user.increment();
 
     // Save the updated user object in the database
     const updatedUser = await user.save();
@@ -393,7 +396,10 @@ export async function deleteUserAddress(
     // Remove the specified address from the user's addresses array.
     const result = await UserSchema.updateOne(
       { _id: userId },
-      { $pull: { addresses: { _id: addressId } } }
+      {
+        $pull: { addresses: { _id: addressId } },
+        $inc: { __v: 1 }, // Increment version
+      }
     );
 
     // If the modified count is not 1, then the address was not found.
@@ -425,6 +431,7 @@ export async function updateUserAddress(
         $set: {
           "addresses.$": newAddress,
         },
+        $inc: { __v: 1 }, // Increment version
       }
     );
 
@@ -605,13 +612,21 @@ export async function verifyUserEmail(
     await verifyVerificationTokenHandler("email", email, code, req);
 
     //change user email
-    user = await UserSchema.findOneAndUpdate({ _id: userId }, { email });
+    user = await UserSchema.findOneAndUpdate(
+      { _id: userId },
+      {
+        email,
+        $inc: { __v: 1 }, // Increment version
+      },
+      { new: true }
+    );
 
     //get the refresh tokens and update the email it the sot is an email
     const cashedRT = await refreshsSchema.findOne({ userId });
     if (cashedRT && cashedRT._sot === "email") {
       //@ts-ignore
       cashedRT.email = email;
+      cashedRT.ver = user?.__v || 0;
       await cashedRT.save();
     }
 
@@ -669,13 +684,21 @@ export async function verifyUserPhone(
     await verifyVerificationTokenHandler("phone", phone, code, req);
 
     //change user Phone number
-    user = await UserSchema.findOneAndUpdate({ _id: userId }, { phone });
+    user = await UserSchema.findOneAndUpdate(
+      { _id: userId },
+      {
+        phone,
+        $inc: { __v: 1 }, // Increment version
+      },
+      { new: true }
+    );
 
     //get the refresh tokens and update the phone number it the sot is an phone
     const cashedRT = await refreshsSchema.findOne({ userId });
     if (cashedRT && cashedRT._sot === "phone") {
       //@ts-ignore
       cashedRT.phone = phone;
+      cashedRT.ver = user?.__v || 0;
       await cashedRT.save();
     }
 
@@ -749,6 +772,7 @@ export async function setAddressAsDefault(
       });
     }
 
+    result.increment();
     await result.save();
 
     // Return success response
@@ -778,6 +802,7 @@ export async function createNewUser(
       phone,
     });
 
+    user.increment();
     await user.save();
 
     res.status(201).json({ ...responseDefault, result: { ...user } });
@@ -816,6 +841,7 @@ export async function addUserRole(
     }
 
     user.roles = [...user.roles, role];
+    user.increment();
 
     await user.save();
 
@@ -875,6 +901,7 @@ export async function removeUserRole(
     }
 
     user.roles = user.roles.filter((r) => r !== role);
+    user.increment();
 
     await user.save();
 
