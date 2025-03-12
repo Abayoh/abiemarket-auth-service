@@ -40,7 +40,6 @@ import logger from "../lib/logger";
 //public
 export async function signin(req: Request, res: Response, next: NextFunction) {
   try {
-    validateRequestBody(signInSchema, req.body);
     // Retrieve username and password from request body
     const { type, password, value, clientId } = req.body;
 
