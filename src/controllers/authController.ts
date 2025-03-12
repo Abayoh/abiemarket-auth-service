@@ -322,10 +322,13 @@ export async function renewAccessToken(
       isGuestToken = true;
       cachedRT = { revoked: false } as any;
     } else {
+      console.log("signin user");
       cachedRT = await refreshsSchema.findOneAndDelete({
         refreshToken,
       });
     }
+
+    console.log(cachedRT);
 
     // Check if the refresh token is revoked
     if (!cachedRT) {
