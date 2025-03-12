@@ -16,16 +16,19 @@ export const guestTokensSchema = Joi.object({
 // Schema for renewAccessToken endpoint
 export const renewAccessTokenSchema = Joi.object({
   refreshToken: Joi.string().required(),
+  clientId: Joi.string().required(),
 });
 
 // Schema for signout endpoint
 export const signoutSchema = Joi.object({
   refreshToken: Joi.string().required(),
+  clientId: Joi.string().required(),
 });
 
 // Schema for revokeToken endpoint
 export const revokeTokenSchema = Joi.object({
   token: Joi.string().required(),
+  clientId: Joi.string().required(),
 });
 
 // Schema for signup endpoint - this already exists in the code as signUpSchema
