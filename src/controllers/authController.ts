@@ -329,9 +329,6 @@ export async function renewAccessToken(
       });
     }
 
-    console.log(cachedRT);
-    console.log(decodedResult.payload);
-
     // Check if the refresh token is revoked
     if (!cachedRT) {
       throw new AppError(authErrorCodes.AUTH_UNAUTHORIZED, undefined, {
@@ -364,7 +361,7 @@ export async function renewAccessToken(
       },
       maxAge: authConfigsLoader.getConfig().rtMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
-      ver: decodedResult.payload.ver,
+      ver: cachedRT.ver,
     });
 
     const clientProfileUpdated = decodedResult.payload.ver !== cachedRT.ver;
