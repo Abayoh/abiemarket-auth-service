@@ -330,6 +330,7 @@ export async function renewAccessToken(
     }
 
     console.log(cachedRT);
+    console.log(decodedResult.payload);
 
     // Check if the refresh token is revoked
     if (!cachedRT) {
