@@ -27,11 +27,9 @@ import {
   newUserAddressSchema,
   verifyUserEmailSchema,
   verifyUserPhoneSchema,
-} from "../models/users/userRequestVerificationSchemas";
-import {
-  addUserRoleSchema,
   changeUserNameSchema,
-} from "../middleware/userValidationRequestSchema";
+} from "../models/users/userRequestVerificationSchemas";
+import { addUserRoleSchema } from "../middleware/userValidationRequestSchema";
 
 const router = Router();
 

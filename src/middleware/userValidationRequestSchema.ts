@@ -6,7 +6,3 @@ export const addUserRoleSchema = Joi.object({
     .valid(...userRoles)
     .required(),
 });
-
-export const changeUserNameSchema = Joi.object({
-  name: Joi.string().required(),
-});

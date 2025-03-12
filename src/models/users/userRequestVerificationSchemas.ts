@@ -16,6 +16,11 @@ export const changeUserPhoneSchema = Joi.object({
   currentPassword: Joi.string().min(8).required(),
 });
 
+export const changeUserNameSchema = Joi.object({
+  name: Joi.string().required(),
+  currentPassword: Joi.string().min(8).required(),
+});
+
 export const newUserAddressSchema = Joi.object({
   add1: Joi.string().required(),
   city: Joi.string().required(),
