@@ -1504,3 +1504,149 @@ export async function verifyOTP(
     next(error);
   }
 }
+
+/**
+ * Get all active sessions (devices) the user is currently logged into
+ * @param req - The request object
+ * @param res - The response object
+ * @param next - The next function
+ * @returns A JSON response with all active sessions
+ */
+export async function getActiveSessions(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const userId = req.user.sub;
+
+    // Find all active refresh tokens for this user
+    const activeSessions = await refreshsSchema
+      .find(
+        {
+          userId: userId,
+          revoked: false,
+          expires: { $gt: new Date() }, // Only return non-expired tokens
+        },
+        {
+          _id: 1,
+          clientId: 1,
+          userAgent: 1,
+          created: 1,
+          expires: 1,
+          site: 1,
+        }
+      )
+      .lean();
+
+    if (!activeSessions || activeSessions.length === 0) {
+      return res.json({
+        ...responseDefault,
+        result: {
+          sessions: [],
+          currentSession: req.forwardedUserAgent || "Unknown",
+        },
+      });
+    }
+
+    // Map the sessions to a more user-friendly format
+    const sessions = activeSessions.map((session) => ({
+      id: session._id,
+      clientId: session.clientId,
+      device: session.userAgent,
+      createdAt: session.created,
+      expiresAt: session.expires,
+      signInAt: session.sit,
+      isCurrentDevice: session.userAgent === req.forwardedUserAgent,
+    }));
+
+    res.json({
+      ...responseDefault,
+      result: {
+        sessions,
+        currentSession: req.forwardedUserAgent || "Unknown",
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Log out from all devices or a specific device
+ * @param req - The request object
+ * @param res - The response object
+ * @param next - The next function
+ * @returns A JSON response indicating success
+ */
+export async function logoutFromDevices(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const userId = req.user.sub;
+    const { clientId, allDevices, currentDeviceId } = req.body;
+
+    // Validate request parameters
+    if (!allDevices && !clientId && !currentDeviceId) {
+      throw new AppError(
+        authErrorCodes.AUTH_BAD_REQUEST,
+        "You must specify either clientId, or allDevices=true",
+        {
+          logLevel: "warn",
+          errorLogSeverity: "minor",
+          where: "logoutFromDevices",
+          additionalInfo: "Invalid request parameters",
+        }
+      );
+    }
+
+    let result;
+
+    // Logout from all devices
+    if (allDevices) {
+      //logout from all devices except the current one
+      result = await refreshsSchema.deleteMany({
+        userId: userId,
+        clientId: { $ne: currentDeviceId },
+      });
+
+      logger.info(`User ${userId} logged out from all devices`);
+    }
+    // Logout from a specific device by clientId
+    else {
+      result = await refreshsSchema.deleteMany({
+        userId: userId,
+        clientId: clientId,
+      });
+
+      if (result.deletedCount === 0) {
+        throw new AppError(
+          authErrorCodes.AUTH_ADDRESS_NOT_FOUND,
+          "No active sessions found for this client",
+          {
+            logLevel: "warn",
+            errorLogSeverity: "minor",
+            where: "logoutFromDevices",
+            additionalInfo: "No sessions found for client",
+          }
+        );
+      }
+
+      logger.info(`User ${userId} logged out from client ${clientId}`);
+    }
+
+    res.json({
+      ...responseDefault,
+      result: {
+        message: allDevices
+          ? "Logged out from all devices"
+          : "Logged out from specified client",
+        sessionCount: result.deletedCount || 0,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}

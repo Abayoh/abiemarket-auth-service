@@ -28,6 +28,7 @@ import {
   verifyUserEmailSchema,
   verifyUserPhoneSchema,
   changeUserNameSchema,
+  logoutFromDevicesSchema,
 } from "../models/users/userRequestVerificationSchemas";
 import { addUserRoleSchema } from "../middleware/userValidationRequestSchema";
 

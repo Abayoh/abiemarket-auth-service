@@ -48,3 +48,9 @@ export const verifyUsernameChangeSchema = Joi.object({
   name: Joi.string().required(),
   currentPassword: Joi.string().min(8).required(),
 });
+
+export const logoutFromDevicesSchema = Joi.object({
+  clientId: Joi.string().optional(),
+  allDevices: Joi.boolean().optional(),
+  currentDeviceId: Joi.string().optional(),
+}).or("clientId", "allDevices", "currentDeviceId");

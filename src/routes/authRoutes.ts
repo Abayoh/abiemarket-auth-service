@@ -22,7 +22,11 @@ import {
   verifyOTP,
   getGuestTokens,
   verifyPasswordResetToken,
+  logoutFromDevices,
+  getActiveSessions,
 } from "../controllers/authController";
+import auth from "../middleware/authorize";
+import { logoutFromDevicesSchema } from "../models/users/userRequestVerificationSchemas";
 
 const router = Router();
 
@@ -101,6 +105,13 @@ router
     "/guest-tokens",
     validateSchema({ schema: schemas.guestTokensSchema }),
     getGuestTokens
+  )
+  .get("/sessions", auth, getActiveSessions)
+  .post(
+    "/logout-sessions",
+    auth,
+    validateSchema({ schema: logoutFromDevicesSchema }),
+    logoutFromDevices
   );
 
 export default router;
