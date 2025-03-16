@@ -1534,7 +1534,7 @@ export async function getActiveSessions(
           userAgent: 1,
           created: 1,
           expires: 1,
-          site: 1,
+          sit: 1,
         }
       )
       .lean();
