@@ -69,13 +69,13 @@ router
     updateUserAddress
   )
   .patch(
-    "/email/verify",
+    "/email-verify",
     auth,
     validateSchema({ schema: verifyUserEmailSchema }),
     verifyUserEmail
   )
   .patch(
-    "/phone/verify",
+    "/phone-verify",
     auth,
     validateSchema({ schema: verifyUserPhoneSchema }),
     verifyUserPhone
