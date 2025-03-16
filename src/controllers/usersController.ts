@@ -40,7 +40,7 @@ export async function getUserInfo(
       });
     }
 
-    res.json({ ...responseDefault, result: { ...user } });
+    res.json({ ...responseDefault, result: { user } });
   } catch (error) {
     next(error);
   }
