@@ -272,14 +272,18 @@ export async function renewAccessToken(
     const clientId = req.body.clientId;
 
     if (!refreshToken) {
-      throw new AppError(authErrorCodes.AUTH_UNAUTHORIZED, "unauthorized", {
-        logLevel: "security",
-        errorLogSeverity: "critical",
-        where: "renewAccessToken",
-        neededActions: ["check the client request"],
-        additionalInfo:
-          "Renew access token failed with no refresh token provided, This seems like a misused of the API which should be investigated",
-      });
+      throw new AppError(
+        authErrorCodes.AUTH_REFRESH_UNAUTHORIZED,
+        "unauthorized",
+        {
+          logLevel: "security",
+          errorLogSeverity: "critical",
+          where: "renewAccessToken",
+          neededActions: ["check the client request"],
+          additionalInfo:
+            "Renew access token failed with no refresh token provided, This seems like a misused of the API which should be investigated",
+        }
+      );
     }
 
     // Verify refresh token in the database or session
@@ -292,7 +296,7 @@ export async function renewAccessToken(
     );
 
     if (decodedResult.type === "error") {
-      throw new AppError(authErrorCodes.AUTH_UNAUTHORIZED, undefined, {
+      throw new AppError(authErrorCodes.AUTH_REFRESH_UNAUTHORIZED, undefined, {
         logLevel: "security",
         errorLogSeverity: "critical",
         where: "renewAccessToken",
@@ -304,7 +308,7 @@ export async function renewAccessToken(
 
     if (decodedResult.type === "expired") {
       throw new AppError(
-        authErrorCodes.AUTH_TOKEN_EXPIRED,
+        authErrorCodes.AUTH_REFRESH_UNAUTHORIZED,
         "refresh token expired",
         {
           logLevel: "warn",
@@ -331,7 +335,7 @@ export async function renewAccessToken(
 
     // Check if the refresh token is revoked
     if (!cachedRT) {
-      throw new AppError(authErrorCodes.AUTH_UNAUTHORIZED, undefined, {
+      throw new AppError(authErrorCodes.AUTH_REFRESH_UNAUTHORIZED, undefined, {
         logLevel: "security",
         errorLogSeverity: "critical",
         where: "renewAccessToken",
@@ -341,7 +345,7 @@ export async function renewAccessToken(
       });
     }
     if (cachedRT.revoked) {
-      throw new AppError(authErrorCodes.AUTH_UNAUTHORIZED, undefined, {
+      throw new AppError(authErrorCodes.AUTH_REFRESH_UNAUTHORIZED, undefined, {
         logLevel: "security",
         errorLogSeverity: "critical",
         where: "renewAccessToken",

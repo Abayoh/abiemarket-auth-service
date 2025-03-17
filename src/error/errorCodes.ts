@@ -45,6 +45,7 @@ export const authErrorCodes = {
   AUTH_ROLE_NOT_FOUND: "AUTH_ROLE_NOT_FOUND",
   AUTH_INVALID_GUEST_ID: "AUTH_INVALID_GUEST_ID",
   AUTH_INVALID_RESET_TOKEN: "AUTH_INVALID_RESET_TOKEN",
+  AUTH_REFRESH_UNAUTHORIZED: "AUTH_REFRESH_UNAUTHORIZED",
 };
 
 const authErrorCodesMap: ErrorCodeToStatusAndMessageMap = {
@@ -201,6 +202,10 @@ const authErrorCodesMap: ErrorCodeToStatusAndMessageMap = {
   AUTH_INVALID_RESET_TOKEN: {
     message: "Invalid reset token",
     status: 400,
+  },
+  AUTH_REFRESH_UNAUTHORIZED: {
+    message: "unauthorize",
+    status: 401,
   },
 };
 
