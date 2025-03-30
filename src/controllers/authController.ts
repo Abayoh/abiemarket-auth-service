@@ -531,7 +531,6 @@ export async function revokeToken(
 //public
 export async function signup(req: Request, res: Response, next: NextFunction) {
   try {
-    validateRequestBody(signUpSchema, req.body);
     const { password, name, type, value, code, clientId } = req.body;
 
     // Check if the value (phone number or email) is already taken
