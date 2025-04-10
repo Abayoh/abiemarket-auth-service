@@ -8,6 +8,8 @@ interface RefreshTokenDocument extends Document {
   _sot: "email" | "phone";
   val: string;
   revoked: boolean;
+  email?: string;
+  phone?: string;
   expires: Date;
   created: Date;
   createdByIp: string;
@@ -26,6 +28,8 @@ const refreshTokenSchema: Schema = new Schema<RefreshTokenDocument>({
     type: String,
     required: true,
   },
+  phone: String,
+  email: String,
   val: { type: String, required: true },
   revoked: { type: Boolean, required: true, default: false },
   expires: { type: Date, required: true },

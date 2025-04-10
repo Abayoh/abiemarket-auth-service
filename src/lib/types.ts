@@ -56,6 +56,8 @@ export interface AccessTokenClaims {
   sub: string;
   roles: string[];
   name: string;
+  email?: string;
+  phone?: string;
 }
 
 export interface SessionTokenClaims {

@@ -1,4 +1,4 @@
-import e, { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 import { AppError } from "../error/AppError";
 import { authErrorCodes } from "../error/errorCodes";
 import { UserSchema } from "../models/users";
@@ -18,19 +18,16 @@ import {
   ClientToken,
   TokenTypes,
 } from "../lib/auth";
-import config from "../config";
 import userSchema from "../models/users/userSchema";
 import {
   sendVerificationTokenHandler,
   verifyVerificationTokenHandler,
-  validateRequestBody,
 } from "./helpers";
 import { now, nowInSeconds } from "../utils";
 import refreshTokensSchema from "../models/refreshTokens/refreshTokensSchema";
 import { fromDate } from "../utils";
 import verificationsSchema from "../models/verificationTokens/verificationsSchema";
 import { responseDefault } from "../lib/constants";
-import { signInSchema, signUpSchema } from "../models/users/types";
 import { jwtSecretsLoader, authConfigsLoader } from "../config/configurations";
 
 import {} from "../config/configurations";
@@ -72,13 +69,14 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
     const roles = user.roles;
     // Generate access token
     const accessToken = await generateJWTToken<AccessTokenClaims>({
-      ...responseDefault,
       audience: "abiemarket",
       type: "at",
       claims: {
         sit,
         sub: user._id,
         name: `${user.name}`,
+        email: `${user.email}`,
+        phone: `${user.phone}`,
         roles,
       },
       maxAge: authConfigsLoader.getConfig().atMaxAge,
@@ -127,6 +125,8 @@ export async function signin(req: Request, res: Response, next: NextFunction) {
         name: `${user.name}`,
         _sot: type,
         val: value,
+        phone: user.phone?.phoneNumber,
+        email: user.email,
         roles,
         expires: fromDate(authConfigsLoader.getConfig().rtMaxAge),
         created: now(),
@@ -376,11 +376,14 @@ export async function renewAccessToken(
         roles: cachedRT.roles,
         name: cachedRT.name,
         _sot: cachedRT._sot,
+        phone: cachedRT.phone,
+        email: cachedRT.email,
         val: cachedRT.val,
         expires: fromDate(authConfigsLoader.getConfig().rtMaxAge),
         created: now(),
         ver: cachedRT.ver,
         clientId,
+
         sit: cachedRT.sit,
         userAgent: cachedRT.userAgent,
       });
@@ -394,6 +397,8 @@ export async function renewAccessToken(
         sit: !isGuestToken ? cachedRT.sit : `${decodedResult.payload.sit}`,
         name: !isGuestToken ? cachedRT.name : "Guest",
         sub: !isGuestToken ? cachedRT.userId : `${decodedResult.payload.sub}`,
+        email: !isGuestToken ? cachedRT.email : "",
+        phone: !isGuestToken ? cachedRT.phone : "",
         roles: !isGuestToken ? cachedRT.roles : ["guest"],
       },
       maxAge: authConfigsLoader.getConfig().atMaxAge,
@@ -589,7 +594,14 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
     const accessToken = await generateJWTToken<AccessTokenClaims>({
       audience: "abiemarket",
       type: "at",
-      claims: { sub: newUser._id, roles, name: `${name} `, sit },
+      claims: {
+        sub: newUser._id,
+        roles,
+        name: `${name} `,
+        sit,
+        phone: newUser.phone?.phoneNumber,
+        email: newUser.email,
+      },
       maxAge: authConfigsLoader.getConfig().atMaxAge,
       secret: jwtSecretsLoader.getConfig().newJwtSecert,
       ver: newUser.__v,
@@ -631,6 +643,8 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
       name: `${newUser.name}`,
       _sot: type,
       val: value,
+      email: newUser.email,
+      phone: newUser.phone?.phoneNumber,
       expires: exp,
       created: now(),
       ver: newUser.__v,
